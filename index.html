@@ -1,0 +1,2887 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TARKIZO</title>
+<meta name="description" content="مؤقّت هادئ للدراسة والتركيز بأربع لغات، مع شاشة تركيز كاملة وأصوات طبيعية. A calm study and focus timer.">
+<meta name="theme-color" content="#E7EDEB">
+<meta name="color-scheme" content="light dark">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TARKIZO">
+<style>
+/* base reset (the same base the preview used) */
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font:14px system-ui,sans-serif}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600&family=DM+Mono:wght@300;400&family=Fraunces:opsz,wght@9..144,300;9..144,400&family=JetBrains+Mono:wght@300;400;600&family=Baloo+Bhaijaan+2:wght@400;500;600&display=swap">
+<style>
+/* Layout: one calm column — a settings sheet that gives way to a single large clock while running */
+:root{
+  --bg:#E7EDEB; --surface:#F4F7F6; --ink:#1A2526; --muted:#596866; --line:#CCD7D4;
+  --study:#2C675F; --break:#A26A2C; --on-accent:#FFFFFF;
+  --accent:var(--study);
+  --on-study:#FFFFFF; --on-break:#FFFFFF; --dscale:1; --thick:6px;
+  --f-clock:var(--f-num);
+  --f-ui:"Readex Pro","Segoe UI",Tahoma,system-ui,sans-serif;
+  --f-num:"DM Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101716; --surface:#172120; --ink:#E2EBE8; --muted:#90A19E; --line:#283533;
+  --study:#72B5AA; --break:#DDA463; --on-accent:#0E1615; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#101716; --surface:#172120; --ink:#E2EBE8; --muted:#90A19E; --line:#283533;
+  --study:#72B5AA; --break:#DDA463; --on-accent:#0E1615; color-scheme:dark;}
+
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  transition:background-color .6s ease;
+  --on-accent:var(--on-study); --ring:var(--ring-c,var(--accent)); --digits:var(--digits-c,var(--ink))}
+body[data-phase="break"]{--accent:var(--break);--on-accent:var(--on-break)}
+.wrap{max-width:760px;margin:0 auto;min-height:100%;padding-block:22px 40px;display:flex;flex-direction:column;gap:22px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+header{display:flex;align-items:center;justify-content:space-between;gap:10px 14px;flex-wrap:wrap}
+.mark{font-weight:500;letter-spacing:.32em;font-size:15px;direction:ltr}
+.tag{color:var(--muted);font-size:14px;margin:0;flex:1 1 auto;min-width:0}
+.lang{display:flex;align-items:center;gap:6px;color:var(--muted)}
+.lang svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6}
+.lang select{width:auto;padding:5px 8px;font-size:14px;background:var(--surface)}
+
+.sheet{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.sec{padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.sec+.sec{border-top:1px solid var(--line)}
+.lbl{font-size:13px;color:var(--muted);margin:0;font-weight:500}
+.hint{font-size:13px;color:var(--muted);margin:0}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:7px 14px;display:inline-flex;gap:8px;align-items:baseline;transition:background-color .2s,border-color .2s}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.chip .n{font-family:var(--f-num);font-size:13px;opacity:.8;direction:ltr;unicode-bidi:isolate}
+
+.times{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.time{display:flex;flex-direction:column;gap:6px;min-width:0}
+.time-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums;width:4.5ch;text-align:center;padding:8px 6px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-size:18px}
+.num.wide{width:5.5ch}
+.unit{font-size:13px;color:var(--muted)}
+
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+.opt input{margin-top:6px;accent-color:var(--accent)}
+.opt span{display:flex;flex-direction:column}
+.opt small{color:var(--muted);font-size:13px}
+
+.saved-row{display:flex;gap:8px;flex-wrap:wrap}
+.saved-row input{flex:1 1 180px;min-width:0;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.btn{border:1px solid var(--line);background:transparent;border-radius:12px;padding:9px 16px;transition:border-color .2s,background-color .2s}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn:disabled{opacity:.45;cursor:default}
+.saved-list{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:0;padding:0}
+.saved-list li{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.saved-list button{border:0;background:transparent;padding:6px 12px}
+.saved-list button.x{color:var(--muted);border-inline-start:1px solid var(--line);padding:6px 10px}
+.saved-list button:hover{background:var(--bg)}
+
+.summary{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:14px}
+.summary b{color:var(--ink);font-weight:500}
+.start{width:100%;padding:16px;border-radius:14px;border:0;background:var(--accent);color:var(--on-accent);font-size:19px;font-weight:500;letter-spacing:.02em}
+.start:hover{filter:brightness(1.06)}
+
+/* restore banner */
+.restore{border:1px solid var(--accent);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;background:var(--surface)}
+.restore p{margin:0}
+.restore .row{display:flex;gap:8px;flex-wrap:wrap}
+
+/* run screen */
+.run{position:fixed;inset:0;z-index:40;background:transparent;display:grid;grid-template-rows:auto 1fr auto;gap:12px;
+  padding:max(14px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(20px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  transition:background-color .6s ease}
+body.focus-on{overflow:hidden}
+.ftop{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
+.ficons{display:flex;gap:6px}
+.icon{width:42px;height:42px;display:grid;place-items:center;border:1px solid transparent;background:transparent;border-radius:12px;color:var(--muted);padding:0}
+.icon:hover,.icon[aria-expanded="true"]{color:var(--ink);border-color:var(--line);background:var(--surface)}
+.icon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;min-height:0;min-width:0}
+.fbottom{display:flex;flex-direction:column;align-items:center;gap:10px}
+.fade{transition:opacity .5s ease}
+.run.ui-hidden .fade{opacity:0;pointer-events:none}
+.run.ui-hidden{cursor:none}
+.run.no-progress .bar,.run.no-progress .dots{visibility:hidden}
+.fpanel{box-sizing:border-box;position:absolute;z-index:3;top:calc(max(14px,env(safe-area-inset-top,0px)) + 50px);left:max(16px,env(safe-area-inset-left,0px));
+  width:min(320px,calc(100% - 32px));background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;
+  display:flex;flex-direction:column;gap:12px;box-shadow:0 12px 32px color-mix(in srgb,var(--ink) 14%,transparent)}
+html[dir="ltr"] .fpanel{left:auto;right:max(16px,env(safe-area-inset-right,0px))}
+.fpanel .row{display:flex;gap:8px;flex-wrap:wrap}
+.fsnote{box-sizing:border-box;position:absolute;z-index:4;left:50%;transform:translateX(-50%);bottom:calc(max(20px,env(safe-area-inset-bottom,0px)) + 120px);
+  display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;background:var(--surface);border:1px solid var(--line);
+  border-radius:12px;padding:10px 14px;font-size:14px;width:max-content;max-width:calc(100% - 32px)}
+
+/* mini bar: session keeps running while the full interface is open */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.mini{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  background:var(--surface);border:1px solid var(--accent);border-radius:14px;padding:10px 14px}
+.mini-phase{color:var(--accent);font-weight:500;font-size:14px}
+.mini-clock{font-family:var(--f-num);font-weight:400;font-size:24px;direction:ltr;unicode-bidi:isolate;font-variant-numeric:tabular-nums}
+.mini-btns{margin-inline-start:auto;display:flex;gap:8px;flex-wrap:wrap}
+.phase{margin:0;font-size:17px;color:var(--accent);font-weight:500;letter-spacing:.02em}
+.clock{font-family:var(--f-clock);font-weight:300;font-variant-numeric:tabular-nums;color:var(--digits);
+  font-size:min(calc(var(--dscale) * clamp(84px,min(24vw,42vh),340px)),30vw);line-height:1;transition:opacity .3s;letter-spacing:-.03em;direction:ltr;unicode-bidi:isolate;white-space:nowrap}
+.clock.long{font-size:min(calc(var(--dscale) * clamp(60px,min(16.5vw,34vh),260px)),21vw)}
+.run.is-paused .clock{opacity:.45}
+.bar{width:min(100%,460px);height:4px;border-radius:4px;background:var(--line);overflow:hidden}
+.fill{height:100%;background:var(--ring);transform:scaleX(0);transform-origin:right;transition:transform .25s linear}
+html[dir="ltr"] .fill{transform-origin:left}
+.dots{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:460px}
+.dot{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--accent);opacity:.55}
+.dot.is-done{background:var(--accent);opacity:1}
+.dot.is-now{opacity:1;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+.meta{margin:0;color:var(--muted);font-size:14px}
+.msg{margin:0;color:var(--muted);max-width:36ch;font-size:15px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.controls .btn.primary{min-width:9.5em;padding:12px 22px;font-size:17px}
+.controls.small .btn{font-size:14px;padding:7px 13px;color:var(--muted)}
+.controls.small .btn:hover{color:var(--ink)}
+.btn.warn{border-color:var(--accent);color:var(--ink)}
+.mono{font-family:var(--f-num);direction:ltr;unicode-bidi:isolate}
+
+/* countdown overlay */
+.cd{position:fixed;inset:0;background:color-mix(in srgb,var(--bg) 84%,transparent);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  padding:env(safe-area-inset-top,0px) max(16px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(16px,env(safe-area-inset-left,0px))}
+.cd p{margin:0;color:var(--muted)}
+.cd-num{font-family:var(--f-clock);font-weight:300;font-size:clamp(120px,42vw,300px);line-height:1;color:var(--accent);direction:ltr}
+.cd-num.word{font-family:var(--f-ui);font-weight:500;font-size:clamp(56px,16vw,120px)}
+.pop{animation:pop .5s ease-out}
+@keyframes pop{from{opacity:.15;transform:scale(.86)}to{opacity:1;transform:scale(1)}}
+
+/* done */
+.done{display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center;padding-block:40px}
+.done h2{margin:0;font-weight:500;font-size:26px;text-wrap:balance}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;width:100%}
+.stats div{background:var(--surface);padding:14px 8px;display:flex;flex-direction:column;gap:4px}
+.stats b{font-family:var(--f-num);font-weight:400;font-size:20px;direction:ltr;unicode-bidi:isolate}
+.stats span{font-size:13px;color:var(--muted)}
+
+/* ambient scene drawn behind everything */
+#scene{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block}
+.wrap{position:relative;z-index:1}
+body.focus-on header{visibility:hidden}
+
+/* settings tabs */
+.tabs{display:flex;gap:4px;padding:8px;border-bottom:1px solid var(--line)}
+.tab{flex:1;border:0;background:transparent;border-radius:10px;padding:9px 12px;color:var(--muted);font-weight:500}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{background:var(--bg);color:var(--ink)}
+#startSec{border-top:1px solid var(--line)}
+
+/* clock faces — one markup, six styles */
+.face{position:relative;display:flex;align-items:center;justify-content:center;gap:clamp(16px,4vw,36px);max-width:100%}
+.dial,.vbar{display:none}
+[data-style="ring"] .face,[data-style="progress"] .face{width:min(78vw,56vh,500px);aspect-ratio:1;container-type:size}
+[data-style="ring"] .dial,[data-style="progress"] .dial{display:block;position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
+[data-style="ring"] .clock,[data-style="progress"] .clock{font-size:calc(19cqw * var(--dscale))}
+[data-style="ring"] .clock.long,[data-style="progress"] .clock.long{font-size:calc(13.5cqw * var(--dscale))}
+[data-style="ring"] .bar,[data-style="progress"] .bar,[data-style="huge"] .bar,
+[data-style="minimal"] .bar,[data-style="minimal"] .dots,[data-style="minimal"] .phase{display:none}
+[data-style="bar"][data-bardir="v"] .bar{display:none}
+[data-style="bar"][data-bardir="v"] .vbar{display:block}
+[data-style="bar"] .bar{height:max(6px,var(--thick));width:min(100%,560px)}
+[data-style="bar"] .clock{font-size:min(calc(var(--dscale) * clamp(64px,min(18vw,32vh),250px)),27vw)}
+[data-style="bar"] .clock.long{font-size:min(calc(var(--dscale) * clamp(48px,min(12.5vw,26vh),190px)),19vw)}
+[data-style="huge"] .clock{font-size:min(calc(var(--dscale) * min(31vw,62vh)),31vw)}
+[data-style="huge"] .clock.long{font-size:min(calc(var(--dscale) * min(21vw,44vh)),21.5vw)}
+[data-style="huge"] .phase{font-size:14px}
+.track{fill:none;stroke:var(--line);stroke-width:var(--thick)}
+.arc{fill:none;stroke:var(--ring);stroke-width:var(--thick);stroke-linecap:round;stroke-dasharray:515.22;transition:stroke-dashoffset .3s linear}
+.ticks line{stroke:var(--muted);stroke-width:1;opacity:.45;stroke-linecap:round}
+.ticks line.major{stroke-width:2;opacity:.75}
+[data-style="progress"] .ticks{display:none}
+.vbar{width:max(8px,var(--thick));height:min(44vh,340px);border-radius:999px;background:var(--line);overflow:hidden}
+.vfill{width:100%;height:100%;background:var(--ring);transform:scaleY(0);transform-origin:bottom;transition:transform .3s linear}
+
+/* appearance tab */
+.themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px}
+.th{border:1px solid var(--line);border-radius:14px;padding:0;overflow:hidden;background:var(--surface);text-align:start;display:flex;flex-direction:column}
+.th:hover{border-color:var(--accent)}
+.th[aria-pressed="true"]{outline:2px solid var(--accent);outline-offset:2px}
+.th-sw{height:66px;display:flex;align-items:center;justify-content:center;position:relative}
+.th-sw b{font-weight:300;font-size:25px;direction:ltr;letter-spacing:-.02em}
+.th-sw i{position:absolute;inset-inline-end:8px;bottom:8px;width:10px;height:10px;border-radius:50%}
+.th-name{padding:7px 10px;font-size:13px}
+.pvbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border:1px dashed var(--accent);border-radius:12px;padding:10px 12px}
+.pvbar span{flex:1 1 160px}
+.pvbox{border:1px solid var(--line);border-radius:14px;min-height:250px;padding:18px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  background:linear-gradient(180deg,var(--bg),color-mix(in srgb,var(--bg) 88%,var(--accent)));overflow:hidden}
+.pvbox .clock{font-size:calc(var(--dscale) * 58px)}
+.pvbox[data-style="huge"] .clock{font-size:calc(var(--dscale) * 84px)}
+.pvbox[data-style="bar"] .clock{font-size:calc(var(--dscale) * 46px)}
+.pvbox[data-style="ring"] .face,.pvbox[data-style="progress"] .face{width:176px}
+.pvbox[data-style="ring"] .clock,.pvbox[data-style="progress"] .clock{font-size:calc(19cqw * var(--dscale))}
+.pvbox .vbar{height:130px}
+.pvbox .bar{width:min(100%,300px)}
+.pvbox .phase{font-size:14px}
+.field{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;font-size:14px}
+.field input[type="range"]{grid-column:1/-1;width:100%;accent-color:var(--accent)}
+.field output{font-family:var(--f-num);font-size:13px;color:var(--muted);direction:ltr;unicode-bidi:isolate}
+.colors{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.color{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;padding:6px 8px;min-width:0}
+.color input[type="color"]{width:34px;height:30px;border:0;padding:0;background:none;cursor:pointer;flex:none}
+.color label{flex:1;font-size:14px;min-width:0;cursor:pointer}
+.color button{border:0;background:none;color:var(--accent);font-size:13px;padding:4px 6px;border-radius:8px}
+.color button:disabled{color:var(--muted);opacity:.6;cursor:default}
+html.calm *{animation:none!important;transition:none!important}
+
+/* home: the clock is the page */
+.home{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;min-height:0}
+.hero{container-type:inline-size;width:100%;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.hero .clock{font-size:min(calc(var(--dscale) * 21cqw), calc(var(--dscale) * 30vh))}
+.hero .clock.long{font-size:min(calc(var(--dscale) * 14.5cqw), calc(var(--dscale) * 21vh))}
+.hero[data-style="huge"] .clock{font-size:min(calc(var(--dscale) * 27cqw), calc(var(--dscale) * 38vh))}
+.hero[data-style="huge"] .clock.long{font-size:min(calc(var(--dscale) * 18.5cqw), calc(var(--dscale) * 26vh))}
+.hero[data-style="bar"] .clock{font-size:min(calc(var(--dscale) * 17cqw), calc(var(--dscale) * 26vh))}
+.hero[data-style="ring"] .face,.hero[data-style="progress"] .face{width:min(76cqw,50vh,430px)}
+.hero[data-style="ring"] .clock,.hero[data-style="progress"] .clock{font-size:calc(19cqw * var(--dscale))}
+.hero[data-style="ring"] .clock.long,.hero[data-style="progress"] .clock.long{font-size:calc(13.5cqw * var(--dscale))}
+.hero .vbar{height:min(34vh,260px)}
+.hero .bar{width:min(100%,460px)}
+.hidle{display:flex;flex-direction:column;align-items:center;gap:16px;width:min(100%,460px)}
+.hchips{justify-content:center}
+.hidle .summary{justify-content:center;gap:4px 14px}
+.setbtn{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;background:var(--surface)}
+.setbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round}
+.setbtn[aria-expanded="true"]{border-color:var(--accent)}
+
+/* ---- skins: the two showcase themes change more than colours ---- */
+.bloom{display:none}
+.bloom ellipse{fill:var(--ring)}
+.bloom .bc{fill:#FFE08A}
+.statusbar{display:none}
+.th{position:relative}
+.th-badge{position:absolute;top:6px;inset-inline-start:6px;font-size:11px;padding:1px 7px;border-radius:999px;background:var(--accent);color:var(--on-accent);font-weight:500}
+
+/* Code: calm, only the shapes change */
+body[data-skin="code"] .btn,body[data-skin="code"] .chip,body[data-skin="code"] .mixname{border-radius:8px}
+body[data-skin="code"] .start{border-radius:10px}
+
+/* Rose garden */
+body[data-skin="rose"]{--f-ui:"Baloo Bhaijaan 2","Readex Pro","Segoe UI",system-ui,sans-serif}
+body[data-skin="rose"] .phase::before,body[data-skin="rose"] .phase::after{content:"✿";margin:0 .45em;opacity:.7}
+body[data-skin="rose"] .clock{font-weight:500;letter-spacing:-.01em;text-shadow:0 6px 30px color-mix(in srgb,var(--accent) 30%,transparent)}
+body[data-skin="rose"] .start,body[data-skin="rose"] .btn.primary,body[data-skin="rose"] .chip[aria-pressed="true"],body[data-skin="rose"] .mixname[aria-pressed="true"]{
+  background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 62%,#FFFFFF));border-color:transparent;
+  box-shadow:0 8px 22px color-mix(in srgb,var(--accent) 32%,transparent)}
+body[data-skin="rose"] .start{border-radius:999px}
+body[data-skin="rose"] .sheet,body[data-skin="rose"] .th,body[data-skin="rose"] .btn,body[data-skin="rose"] .chip{border-color:color-mix(in srgb,var(--accent) 22%,var(--line))}
+body[data-skin="rose"] [data-style="ring"] .bloom,body[data-skin="rose"] [data-style="progress"] .bloom{display:block}
+body[data-skin="rose"] .dot{border-radius:50% 50% 50% 0;transform:rotate(-45deg)}
+html[dir="rtl"] body[data-skin="rose"] .dot{border-radius:50% 50% 0 50%;transform:rotate(45deg)}
+body.dragging,body.dragging *{transition:none!important}
+
+/* tasks */
+.taskline{border:1px dashed var(--line);background:transparent;border-radius:999px;padding:7px 16px;color:var(--muted);font-size:14px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.taskline:hover{border-color:var(--accent);color:var(--ink)}
+.taskline.has{border-style:solid;color:var(--ink);background:var(--surface)}
+.ftask{margin:0;color:var(--muted);font-size:15px;max-width:min(90vw,520px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.taskform{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center}
+.taskform input[type="text"]{min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.tgt{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.tgt .num{width:3.6ch;padding:7px 4px;font-size:15px}
+.tasklist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.task{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:8px 8px 8px 10px;background:var(--bg)}
+.task.current{border-color:var(--accent)}
+.tk-pick{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);background:transparent;padding:0;flex:none}
+.tk-pick[aria-pressed="true"]{border-color:var(--accent);background:radial-gradient(circle,var(--accent) 0 5px,transparent 6px)}
+.tk-name{border:0;background:none;padding:0;text-align:start;font-size:15px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%}
+.tk-prog{display:flex;align-items:center;gap:8px;margin-top:4px}
+.tk-bar{flex:1;height:4px;border-radius:4px;background:var(--line);overflow:hidden}
+.tk-bar i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.tk-n{font-size:12px;color:var(--muted);font-family:var(--f-num)}
+.tk-n.ok{color:var(--accent)}
+.tk-act{display:flex;gap:2px}
+.tk-act button{width:32px;height:32px;border:0;background:transparent;border-radius:8px;color:var(--muted);display:grid;place-items:center;padding:0}
+.tk-act button:hover{background:var(--surface);color:var(--ink)}
+.tk-act button:disabled{opacity:.3;cursor:default;background:transparent}
+.tk-act svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tk-more{grid-column:1/-1;display:flex;flex-direction:column;gap:8px;padding-top:6px}
+.tk-more textarea{font:inherit;font-size:14px;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px;resize:vertical;min-height:60px}
+.tk-more .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.task.done-t .tk-name{text-decoration:line-through;color:var(--muted)}
+@media (max-width:440px){ .taskform{grid-template-columns:minmax(0,1fr) auto} .taskform input[type="text"]{grid-column:1/-1} }
+
+/* progress page */
+.statsv{display:flex;flex-direction:column;gap:14px;padding-bottom:20px}
+.sv-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.sv-head h2{margin:0;font-weight:500;font-size:24px}
+.empty{margin:0;padding:14px 16px;border:1px dashed var(--line);border-radius:14px;color:var(--muted);background:var(--surface)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.kpi span{font-size:13px;color:var(--muted)}
+.kpi b{font-weight:500;font-size:21px;font-variant-numeric:tabular-nums}
+.kpi small{font-size:12px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.goal-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.goal-text{margin:0;font-size:16px}
+.gbar{height:8px;border-radius:8px;background:var(--line);overflow:hidden}
+.gbar i{display:block;height:100%;width:0;background:var(--accent);border-radius:8px;transition:width .4s}
+.chartbox{overflow:hidden;min-width:0}
+#chart{display:block;width:100%;height:auto;touch-action:pan-y}
+#chart text{fill:var(--muted);font:11px var(--f-ui)}
+#chart .grid{stroke:var(--line);stroke-width:1}
+#chart .goal{stroke:var(--ink);stroke-width:1.5;stroke-dasharray:4 4;opacity:.55}
+#chart .barm{fill:var(--accent);transition:opacity .15s}
+#chart.hovering .barm{opacity:.45}
+#chart.hovering .barm.on{opacity:1}
+#chart .hit{fill:transparent;cursor:pointer}
+#chart text,#chart .goal,#chart .grid{pointer-events:none}
+.chart-read{margin:0;min-height:1.5em;font-size:14px}
+.legend{margin:0;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.legend i{width:22px;border-top:1.5px dashed var(--ink);opacity:.55}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.streak{margin:0;font-size:18px}
+.bytask{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.bytask li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;font-size:14px}
+.bytask li span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bytask .bt-bar{grid-column:1/-1;height:6px;border-radius:6px;background:var(--line);overflow:hidden}
+.bytask .bt-bar i{display:block;height:100%;background:var(--accent);border-radius:6px}
+#dataBox::placeholder{font-family:var(--f-ui);font-size:13px}
+#dataBox{font:12px/1.45 var(--f-num);color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;width:100%;box-sizing:border-box;resize:vertical;min-width:0}
+.card .row{display:flex;gap:8px;flex-wrap:wrap}
+.filebtn{position:relative;overflow:hidden;cursor:pointer}
+.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.setbtn[aria-pressed="true"]{border-color:var(--accent)}
+@media (max-width:640px){ .kpis{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:480px){ .setbtn span{display:none} .setbtn{padding:8px 10px} }
+
+/* settings drawer: slides in from the side, resizable on wide screens */
+:root{--dw:400px}
+.drawer{position:fixed;top:0;bottom:0;inset-inline-start:0;z-index:60;width:min(var(--dw),100vw);display:flex;flex-direction:column;
+  background:var(--surface);border-inline-end:1px solid var(--line);box-shadow:0 0 40px color-mix(in srgb,var(--ink) 12%,transparent);
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  transition:transform .32s cubic-bezier(.2,.8,.2,1),visibility 0s}
+html[dir="rtl"] .drawer:not(.open){transform:translateX(102%)}
+html[dir="ltr"] .drawer:not(.open){transform:translateX(-102%)}
+.drawer:not(.open){visibility:hidden;transition:transform .32s cubic-bezier(.2,.8,.2,1),visibility 0s .32s}
+.dr-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 12px 10px 18px;border-bottom:1px solid var(--line)}
+html[dir="rtl"] .dr-head{padding:12px 18px 10px 12px}
+.dr-head b{font-weight:500;font-size:16px}
+.dr-head .icon svg{stroke-width:2}
+.dr-body{flex:1;overflow-y:auto;overscroll-behavior:contain}
+.drawer .sheet{border:0;border-radius:0;background:transparent;overflow:visible}
+.drawer .tabs{position:sticky;top:0;z-index:2;background:var(--surface)}
+.dr-grip{position:absolute;top:0;bottom:0;inset-inline-end:-6px;width:12px;cursor:col-resize;touch-action:none}
+.dr-grip::after{content:"";position:absolute;top:50%;inset-inline-start:4px;width:4px;height:48px;margin-top:-24px;border-radius:4px;background:var(--accent);opacity:0;transition:opacity .2s}
+.drawer:hover .dr-grip::after,.dr-grip:focus-visible::after,.dr-grip.drag::after{opacity:.7}
+.scrim{position:fixed;inset:0;z-index:55;background:color-mix(in srgb,var(--ink) 32%,transparent)}
+body{transition:background-color .6s ease,padding .32s cubic-bezier(.2,.8,.2,1)}
+@media (min-width:960px){
+  .scrim{display:none!important}
+  body.dr-open{padding-inline-start:calc(var(--dw) + 24px)}
+  body.dr-open .run,body.dr-open .cd{inset-inline-start:var(--dw)}
+}
+@media (max-width:959px){
+  .dr-grip{display:none}
+  .drawer{width:min(440px,92vw)}
+}
+
+/* sounds tab */
+.srows{display:flex;flex-direction:column;gap:8px}
+.srow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) auto;gap:8px;align-items:center}
+.srow label{font-size:14px}
+select{font:inherit;font-size:14px;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0;width:100%}
+.play{padding:0;width:40px;height:38px;display:grid;place-items:center;color:var(--accent)}
+.play svg{width:16px;height:16px;fill:currentColor}
+.stack{display:flex;flex-direction:column;gap:12px}
+.ambtop{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.mixrows{display:flex;flex-direction:column;gap:6px}
+.mixgroup{margin:10px 0 2px;font-size:12px;color:var(--muted);letter-spacing:.04em;font-weight:500}
+.mixgroup:first-child{margin-top:0}
+.mixrow{display:grid;grid-template-columns:minmax(0,10em) minmax(0,1fr) 3.2em;gap:10px;align-items:center}
+.mixname{border:1px solid var(--line);background:transparent;border-radius:999px;padding:6px 12px;font-size:14px;text-align:start;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mixname:hover{border-color:var(--accent)}
+.mixname[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.mixrow input{width:100%;accent-color:var(--accent)}
+.mixrow output{font-family:var(--f-num);font-size:13px;color:var(--muted);text-align:end;direction:ltr;unicode-bidi:isolate}
+.cue{margin:0;font-size:15px;color:var(--accent);font-weight:500}
+.run.warning .clock{animation:breathe 1s ease-in-out infinite}
+@keyframes breathe{50%{opacity:.5}}
+@media (max-width:440px){
+  .srow{grid-template-columns:minmax(0,1fr) auto}
+  .srow label{grid-column:1/-1}
+  .mixrow{grid-template-columns:minmax(0,7.5em) minmax(0,1fr) 3em}
+}
+
+@media (max-width:440px){
+  .times{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+
+</head>
+<body>
+<canvas id="scene" dir="ltr" aria-hidden="true"></canvas>
+<div class="wrap">
+  <header>
+    <span class="mark">TARKIZO</span>
+    <p class="tag" data-t="tagline"></p>
+    <div class="lang">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>
+      <select id="langSel"></select>
+    </div>
+    <button id="openStats" class="btn setbtn" type="button" aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-8M12 20V5M19 20v-12"/></svg>
+      <span data-t="progress"></span>
+    </button>
+    <button id="openSettings" class="btn setbtn" type="button" aria-controls="drawer" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>
+      <span data-t="settings"></span>
+    </button>
+  </header>
+
+  <div id="restore" class="restore" hidden>
+    <p><b data-t="restoreTitle"></b></p>
+    <p id="restoreInfo" class="hint"></p>
+    <div class="row">
+      <button id="restoreGo" class="btn primary" data-t="restoreResume"></button>
+      <button id="restoreDrop" class="btn" data-t="restoreDiscard"></button>
+    </div>
+  </div>
+
+  <!-- HOME: only the clock and how to start -->
+  <main id="home" class="home">
+    <div id="hero" class="hero">
+      <p id="miniPhase" class="phase"></p>
+      <div class="face">
+        <svg class="dial" viewBox="0 0 200 200" aria-hidden="true"><g class="ticks"></g><circle class="track" cx="100" cy="100" r="82"/><circle class="arc" cx="100" cy="100" r="82"/><g class="bloom"><ellipse cx="0" cy="-5.5" rx="3.6" ry="5.4"/><ellipse cx="0" cy="-5.5" rx="3.6" ry="5.4" transform="rotate(72)"/><ellipse cx="0" cy="-5.5" rx="3.6" ry="5.4" transform="rotate(144)"/><ellipse cx="0" cy="-5.5" rx="3.6" ry="5.4" transform="rotate(216)"/><ellipse cx="0" cy="-5.5" rx="3.6" ry="5.4" transform="rotate(288)"/><circle class="bc" r="3.2"/></g></svg>
+        <div class="vbar" aria-hidden="true"><div class="vfill"></div></div>
+        <div id="miniClock" class="clock">25:00</div>
+      </div>
+      <div class="bar"><div class="fill"></div></div>
+    </div>
+    <button id="hTask" class="taskline" type="button"></button>
+    <div id="hIdle" class="hidle">
+      <div id="hPresets" class="chips hchips" role="group"></div>
+      <div class="summary"><span id="sumStudy"></span><span id="sumTotal"></span></div>
+      <button id="startBtn" class="start" type="button" data-t="start"></button>
+    </div>
+    <div id="hLive" class="controls" hidden>
+      <button id="miniPause" class="btn" type="button"></button>
+      <button id="miniFocus" class="btn primary" type="button" data-t="backFocus"></button>
+    </div>
+  </main>
+
+
+  <!-- RUN -->
+  <section id="run" class="run" hidden>
+    <div class="ftop fade">
+      <p id="meta" class="meta"></p>
+      <div class="ficons">
+        <button id="fsBtn" class="icon" type="button"></button>
+        <button id="optBtn" class="icon" type="button" aria-expanded="false" aria-controls="fpanel"></button>
+        <button id="exitFocus" class="icon" type="button"></button>
+      </div>
+    </div>
+
+    <div id="fpanel" class="fpanel" role="dialog" aria-labelledby="fpanelTitle" hidden>
+      <p id="fpanelTitle" class="lbl" data-t="options"></p>
+      <p class="hint" data-t="adjustTime"></p>
+      <div class="row">
+        <button id="minus" class="btn" type="button" data-t="minus"></button>
+        <button id="plus" class="btn" type="button" data-t="plus"></button>
+        <button id="resetPhase" class="btn" type="button" data-t="resetPhase"></button>
+      </div>
+      <label class="opt"><input type="checkbox" id="fAutoHide"><span data-t="autoHide"></span></label>
+      <label class="opt"><input type="checkbox" id="fProgress"><span data-t="showProgress"></span></label>
+      <label class="opt"><input type="checkbox" id="fSound"><span data-t="soundRun"></span></label>
+      <p class="hint" data-t="ambSec"></p>
+      <div class="row"><button id="fAmb" class="btn" type="button"></button><button id="fAll" class="btn" type="button" data-t="allSettings"></button></div>
+      <div class="field"><label for="fAmbVol" data-t="ambVol"></label><output id="fAmbVolOut" for="fAmbVol"></output><input id="fAmbVol" type="range" min="0" max="100" step="5"></div>
+    </div>
+
+    <div id="center" class="center">
+      <p id="phase" class="phase"></p>
+      <p id="fTask" class="ftask" hidden></p>
+      <div class="face">
+        <svg class="dial" viewBox="0 0 200 200" aria-hidden="true"><g class="ticks"></g><circle class="track" cx="100" cy="100" r="82"/><circle class="arc" cx="100" cy="100" r="82"/><g class="bloom"><ellipse cx="0" cy="-5.5" rx="3.6" ry="5.4"/><ellipse cx="0" cy="-5.5" rx="3.6" ry="5.4" transform="rotate(72)"/><ellipse cx="0" cy="-5.5" rx="3.6" ry="5.4" transform="rotate(144)"/><ellipse cx="0" cy="-5.5" rx="3.6" ry="5.4" transform="rotate(216)"/><ellipse cx="0" cy="-5.5" rx="3.6" ry="5.4" transform="rotate(288)"/><circle class="bc" r="3.2"/></g></svg>
+        <div class="vbar" aria-hidden="true"><div class="vfill"></div></div>
+        <div id="clock" class="clock" role="timer">25:00</div>
+      </div>
+      <div class="bar"><div id="fill" class="fill"></div></div>
+      <div id="dots" class="dots" aria-hidden="true"></div>
+      <p id="msg" class="msg" hidden></p>
+      <p id="cue" class="cue" role="status" hidden></p>
+    </div>
+
+    <div class="fbottom fade">
+      <div class="controls">
+        <button id="pause" class="btn primary" type="button"></button>
+      </div>
+      <div class="controls small">
+        <button id="skip" class="btn" type="button"></button>
+        <button id="end" class="btn" type="button" data-t="end"></button>
+      </div>
+    </div>
+
+    <div id="fsNote" class="fsnote" role="status" hidden>
+      <span id="fsNoteText"></span>
+      <button id="fsRetry" class="btn primary" type="button" data-t="fsTry"></button>
+    </div>
+  </section>
+
+  <!-- PROGRESS -->
+  <section id="statsView" class="statsv" hidden>
+    <div class="sv-head"><h2 data-t="progress"></h2><button id="statsBack" class="btn" type="button" data-t="backHome"></button></div>
+    <div id="perChips" class="chips" role="group"></div>
+    <p id="statsEmpty" class="empty" data-t="emptyStats" hidden></p>
+    <div class="kpis">
+      <div class="kpi"><span data-t="kTime"></span><b id="kTime"></b></div>
+      <div class="kpi"><span data-t="kSessions"></span><b id="kSessions"></b></div>
+      <div class="kpi"><span data-t="kLongest"></span><b id="kLongest"></b></div>
+      <div class="kpi"><span data-t="kRounds"></span><b id="kRounds"></b><small data-t="kRoundsHint"></small></div>
+    </div>
+    <div class="card">
+      <div class="goal-top"><p class="lbl" data-t="goalLbl"></p><div id="goalChips" class="chips" role="group"></div></div>
+      <p id="goalText" class="goal-text"></p>
+      <div class="gbar" aria-hidden="true"><i id="goalFill"></i></div>
+      <p id="goalPer" class="hint"></p>
+    </div>
+    <div class="card">
+      <div class="goal-top"><p id="chartTitle" class="lbl"></p><p id="chartGoal" class="legend"><i aria-hidden="true"></i><span></span></p></div>
+      <p id="chartRead" class="chart-read" aria-live="polite"></p>
+      <div id="chartBox" class="chartbox"><svg id="chart" dir="ltr" aria-hidden="true"></svg></div>
+      <table id="chartTable" class="sr"></table>
+    </div>
+    <div id="streakCard" class="card">
+      <p class="lbl" data-t="streak"></p>
+      <p class="streak"><b id="streakNow"></b> <span id="streakBest" class="hint"></span></p>
+    </div>
+    <div id="taskCard" class="card"><p class="lbl" data-t="byTask"></p><ul id="byTask" class="bytask"></ul></div>
+    <div class="card">
+      <label class="opt"><input type="checkbox" id="showStreak"><span data-t="showStreak"></span></label>
+      <label class="opt"><input type="checkbox" id="focusStat"><span data-t="focusStat"></span></label>
+    </div>
+    <div class="card">
+      <p class="lbl" data-t="dataSec"></p>
+      <p class="hint" data-t="dataNote"></p>
+      <div class="row">
+        <button id="exportBtn" class="btn" type="button" data-t="exportBtn"></button>
+        <label class="btn filebtn"><span data-t="importBtn"></span><input id="importFile" type="file" accept=".json,.txt,application/json,text/plain"></label>
+      </div>
+      <textarea id="dataBox" rows="4" dir="ltr" spellcheck="false"></textarea>
+      <div class="row">
+        <button id="importGo" class="btn" type="button" data-t="importGo"></button>
+        <button id="clearBtn" class="btn" type="button" data-t="clearBtn"></button>
+      </div>
+      <p id="dataMsg" class="hint" role="status"></p>
+    </div>
+  </section>
+
+  <!-- DONE -->
+  <section id="done" class="done" hidden>
+    <h2 id="doneTitle"></h2>
+    <div class="stats">
+      <div><b id="stStudied"></b><span data-t="stStudied"></span></div>
+      <div><b id="stSessions"></b><span data-t="stSessions"></span></div>
+      <div><b id="stTotal"></b><span data-t="stTotal"></span></div>
+    </div>
+    <p id="doneTask" class="hint" hidden></p>
+    <div class="controls">
+      <button id="more1" class="btn" data-t="more1"></button>
+      <button id="more2" class="btn" data-t="more2"></button>
+      <button id="back" class="btn primary" data-t="back"></button>
+    </div>
+  </section>
+</div>
+
+<div id="scrim" class="scrim" hidden></div>
+<aside id="drawer" class="drawer" aria-labelledby="drTitle">
+  <div class="dr-head">
+    <b id="drTitle" data-t="settings"></b>
+    <button id="drClose" class="icon" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <div class="dr-body">
+    <div id="setup" class="sheet">
+    <div class="tabs" role="tablist">
+      <button id="tbTimer" class="tab" type="button" role="tab" aria-controls="tabTimer" data-tab="timer" data-t="tabTimer"></button>
+      <button id="tbTasks" class="tab" type="button" role="tab" aria-controls="tabTasks" data-tab="tasks" data-t="tabTasks"></button>
+      <button id="tbLook" class="tab" type="button" role="tab" aria-controls="tabLook" data-tab="look" data-t="tabLook"></button>
+      <button id="tbSound" class="tab" type="button" role="tab" aria-controls="tabSound" data-tab="sound" data-t="tabSound"></button>
+    </div>
+
+    <div id="tabTimer" role="tabpanel" aria-labelledby="tbTimer">
+    <section class="sec">
+      <p class="lbl" data-t="mode"></p>
+      <div id="presets" class="chips" role="group"></div>
+    </section>
+
+    <section class="sec">
+      <div class="times">
+        <div class="time">
+          <p class="lbl" data-t="study"></p>
+          <div class="time-row">
+            <input id="sMin" class="num" type="number" inputmode="numeric" min="0" max="600" dir="ltr"><span class="unit" data-t="min"></span>
+            <input id="sSec" class="num" type="number" inputmode="numeric" min="0" max="59" dir="ltr"><span class="unit" data-t="sec"></span>
+          </div>
+        </div>
+        <div class="time">
+          <p class="lbl" data-t="break"></p>
+          <div class="time-row">
+            <input id="bMin" class="num" type="number" inputmode="numeric" min="0" max="600" dir="ltr"><span class="unit" data-t="min"></span>
+            <input id="bSec" class="num" type="number" inputmode="numeric" min="0" max="59" dir="ltr"><span class="unit" data-t="sec"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <p class="lbl" data-t="cycles"></p>
+      <div class="chips">
+        <div id="cycleChips" class="chips" role="group"></div>
+        <input id="cycles" class="num wide" type="number" inputmode="numeric" min="1" max="99" dir="ltr" aria-label="">
+      </div>
+      <p class="hint" data-t="cyclesHint"></p>
+    </section>
+
+    <section class="sec">
+      <p class="lbl" data-t="countdown"></p>
+      <div id="cdChips" class="chips" role="group"></div>
+      <div class="opts" id="cdModeBox">
+        <label class="opt"><input type="radio" name="cdMode" id="cdEach" value="each"><span data-t="cdEach"></span></label>
+        <label class="opt"><input type="radio" name="cdMode" id="cdFirst" value="first"><span data-t="cdFirst"></span></label>
+      </div>
+    </section>
+
+    <section class="sec">
+      <p class="lbl" data-t="ending"></p>
+      <div class="opts">
+        <label class="opt"><input type="radio" name="ending" id="endStudy" value="study"><span><span data-t="endStudy"></span><small data-t="endStudyHint"></small></span></label>
+        <label class="opt"><input type="radio" name="ending" id="endBreak" value="break"><span><span data-t="endBreak"></span><small data-t="endBreakHint"></small></span></label>
+      </div>
+    </section>
+
+    <section class="sec">
+      <p class="lbl" data-t="focusSec"></p>
+      <div class="opts">
+        <label class="opt"><input type="checkbox" id="autoFocus"><span data-t="autoFocus"></span></label>
+        <label class="opt"><input type="checkbox" id="autoHide"><span><span data-t="autoHide"></span><small data-t="autoHideHint"></small></span></label>
+        <label class="opt"><input type="checkbox" id="autoFs"><span><span data-t="autoFs"></span><small id="autoFsHint" data-t="fsNone" hidden></small></span></label>
+        <label class="opt"><input type="checkbox" id="showProgress"><span data-t="showProgress"></span></label>
+      </div>
+    </section>
+
+    <section class="sec">
+      <p class="lbl" data-t="saved"></p>
+      <form id="saveForm" class="saved-row">
+        <input id="saveName" type="text" maxlength="40" autocomplete="off">
+        <button class="btn" type="submit" data-t="save"></button>
+      </form>
+      <ul id="savedList" class="saved-list"></ul>
+      <p id="savedNone" class="hint" data-t="savedNone"></p>
+    </section>
+
+    <section id="appSec" class="sec" hidden>
+      <p class="lbl" data-t="appSec"></p>
+      <div><button id="installBtn" class="btn primary" type="button" data-t="install" hidden></button></div>
+      <p id="iosHint" class="hint" data-t="iosHint" hidden></p>
+      <div><button id="offlineBtn" class="btn" type="button" data-t="offlineSave" hidden></button></div>
+      <p id="offlineMsg" class="hint" role="status"></p>
+    </section>
+    </div>
+
+    <div id="tabTasks" role="tabpanel" aria-labelledby="tbTasks" hidden>
+      <section class="sec">
+        <p class="lbl" data-t="tasksAdd"></p>
+        <form id="taskForm" class="taskform">
+          <input id="taskName" type="text" maxlength="60" autocomplete="off">
+          <label class="tgt"><span data-t="taskTarget"></span><input id="taskTarget" class="num" type="number" inputmode="numeric" min="1" max="99" value="2" dir="ltr"></label>
+          <button class="btn primary" type="submit" data-t="add"></button>
+        </form>
+      </section>
+      <section class="sec">
+        <p class="lbl" data-t="tasksOpen"></p>
+        <ul id="taskList" class="tasklist"></ul>
+        <p id="taskNone" class="hint" data-t="taskNone"></p>
+      </section>
+      <section id="doneSec" class="sec">
+        <p class="lbl" data-t="tasksDone"></p>
+        <ul id="taskDoneList" class="tasklist"></ul>
+      </section>
+      <section class="sec">
+        <label class="opt"><input type="checkbox" id="showTaskFocus"><span data-t="showTaskFocus"></span></label>
+      </section>
+    </div>
+
+    <div id="tabLook" role="tabpanel" aria-labelledby="tbLook" hidden>
+      <section class="sec">
+        <p class="lbl" data-t="lookMode"></p>
+        <div id="modeChips" class="chips" role="group"></div>
+      </section>
+
+      <section class="sec">
+        <p class="lbl" data-t="lookTheme"></p>
+        <div id="pvBar" class="pvbar" role="status" hidden>
+          <span id="pvText"></span>
+          <button id="pvApply" class="btn primary" type="button" data-t="apply"></button>
+          <button id="pvCancel" class="btn" type="button" data-t="cancel"></button>
+        </div>
+        <div id="themes" class="themes"></div>
+        <div><button id="themeMix" class="btn" type="button" hidden></button></div>
+      </section>
+
+      <section class="sec">
+        <p class="lbl" data-t="lookClock"></p>
+        <div id="styleChips" class="chips" role="group"></div>
+        <div id="pvBox" class="pvbox" aria-hidden="true">
+          <p class="phase" data-t="focus"></p>
+          <div class="face">
+            <svg class="dial" viewBox="0 0 200 200"><g class="ticks"></g><circle class="track" cx="100" cy="100" r="82"/><circle class="arc" cx="100" cy="100" r="82"/><g class="bloom"><ellipse cx="0" cy="-5.5" rx="3.6" ry="5.4"/><ellipse cx="0" cy="-5.5" rx="3.6" ry="5.4" transform="rotate(72)"/><ellipse cx="0" cy="-5.5" rx="3.6" ry="5.4" transform="rotate(144)"/><ellipse cx="0" cy="-5.5" rx="3.6" ry="5.4" transform="rotate(216)"/><ellipse cx="0" cy="-5.5" rx="3.6" ry="5.4" transform="rotate(288)"/><circle class="bc" r="3.2"/></g></svg>
+            <div class="vbar"><div class="vfill"></div></div>
+            <div class="clock">18:30</div>
+          </div>
+          <div class="bar"><div class="fill"></div></div>
+          <div class="dots"><span class="dot is-done"></span><span class="dot is-now"></span><span class="dot"></span><span class="dot"></span></div>
+        </div>
+        <div class="field"><label for="dscale" data-t="digitSize"></label><output id="dscaleOut" for="dscale"></output><input id="dscale" type="range" min="70" max="125" step="5"></div>
+        <div class="field" id="thickField"><label for="thick" data-t="ringThick"></label><output id="thickOut" for="thick"></output><input id="thick" type="range" min="2" max="18" step="1"></div>
+        <div id="barDirBox" class="chips" role="group"></div>
+      </section>
+
+      <section class="sec">
+        <p class="lbl" data-t="lookColors"></p>
+        <div class="colors">
+          <div class="color"><input type="color" id="cBg"><label for="cBg" data-t="cBg"></label><button type="button" id="cBgReset" data-t="auto"></button></div>
+          <div class="color"><input type="color" id="cDigits"><label for="cDigits" data-t="cDigits"></label><button type="button" id="cDigitsReset" data-t="auto"></button></div>
+          <div class="color"><input type="color" id="cRing"><label for="cRing" data-t="cRing"></label><button type="button" id="cRingReset" data-t="auto"></button></div>
+        </div>
+        <p class="hint" data-t="colorsHint"></p>
+      </section>
+
+      <section class="sec">
+        <p class="lbl" data-t="lookBg"></p>
+        <div id="motionChips" class="chips" role="group"></div>
+        <div class="field"><label for="dim" data-t="dim"></label><output id="dimOut" for="dim"></output><input id="dim" type="range" min="0" max="80" step="5"></div>
+        <label class="opt"><input type="checkbox" id="calm"><span><span data-t="calm"></span><small data-t="calmHint"></small></span></label>
+      </section>
+
+      <section class="sec">
+        <div><button id="lookReset" class="btn" type="button" data-t="lookReset"></button></div>
+      </section>
+    </div>
+
+    <div id="tabSound" role="tabpanel" aria-labelledby="tbSound" hidden>
+      <section class="sec">
+        <p class="lbl" data-t="alertsSec"></p>
+        <label class="opt"><input type="checkbox" id="sound"><span data-t="sound"></span></label>
+        <div class="field"><label for="alertVol" data-t="volume"></label><output id="alertVolOut" for="alertVol"></output><input id="alertVol" type="range" min="0" max="100" step="5"></div>
+        <div class="srows">
+          <div class="srow"><label for="sel_studyStart" data-t="ev_studyStart"></label><select id="sel_studyStart"></select><button id="try_studyStart" class="btn play" type="button"></button></div>
+          <div class="srow"><label for="sel_studyEnd" data-t="ev_studyEnd"></label><select id="sel_studyEnd"></select><button id="try_studyEnd" class="btn play" type="button"></button></div>
+          <div class="srow"><label for="sel_breakStart" data-t="ev_breakStart"></label><select id="sel_breakStart"></select><button id="try_breakStart" class="btn play" type="button"></button></div>
+          <div class="srow"><label for="sel_breakEnd" data-t="ev_breakEnd"></label><select id="sel_breakEnd"></select><button id="try_breakEnd" class="btn play" type="button"></button></div>
+        </div>
+        <label class="opt"><input type="checkbox" id="cdTick"><span data-t="cdTick"></span></label>
+      </section>
+
+      <section class="sec">
+        <p class="lbl" data-t="warnSec"></p>
+        <label class="opt"><input type="checkbox" id="warnOn"><span><span data-t="warnOn"></span><small data-t="warnHint"></small></span></label>
+        <div id="warnBox" class="stack">
+          <div id="warnLeadChips" class="chips" role="group"></div>
+          <div class="srow"><label for="sel_warn" data-t="warnSound"></label><select id="sel_warn"></select><button id="try_warn" class="btn play" type="button"></button></div>
+          <div class="field"><label for="warnVol" data-t="volume"></label><output id="warnVolOut" for="warnVol"></output><input id="warnVol" type="range" min="0" max="100" step="5"></div>
+        </div>
+      </section>
+
+      <section class="sec">
+        <p class="lbl" data-t="ambSec"></p>
+        <div class="ambtop"><button id="ambToggle" class="btn primary" type="button"></button></div>
+        <div class="field"><label for="ambVol" data-t="ambVol"></label><output id="ambVolOut" for="ambVol"></output><input id="ambVol" type="range" min="0" max="100" step="5"></div>
+        <p class="hint" data-t="mixQuick"></p>
+        <div id="mixPresets" class="chips" role="group"></div>
+        <div id="mixRows" class="mixrows"></div>
+        <p class="lbl" data-t="ambWhen"></p>
+        <div id="duringChips" class="chips" role="group"></div>
+        <label class="opt"><input type="checkbox" id="ambAuto"><span data-t="ambAuto"></span></label>
+      </section>
+
+      <section class="sec">
+        <p class="lbl" data-t="mixSaved"></p>
+        <form id="mixForm" class="saved-row">
+          <input id="mixName" type="text" maxlength="40" autocomplete="off">
+          <button class="btn" type="submit" data-t="mixSave"></button>
+        </form>
+        <ul id="mixList" class="saved-list"></ul>
+        <p id="mixNone" class="hint" data-t="mixNone"></p>
+      </section>
+
+      <section class="sec">
+        <p class="hint" data-t="soundNote"></p>
+      </section>
+    </div>
+
+    </div>
+  </div>
+  <div id="drGrip" class="dr-grip" role="separator" aria-orientation="vertical" tabindex="0"></div>
+</aside>
+
+<div id="cd" class="cd" hidden>
+  <p id="cdLabel"></p>
+  <div id="cdNum" class="cd-num">5</div>
+  <button id="cdSkip" class="btn" data-t="cdSkip"></button>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- Text (one dictionary per language; more languages arrive in phase 4) ---------- */
+const T = { ar: {
+  tagline:'مؤقّت هادئ للدراسة والتركيز',
+  mode:'وضع الدراسة', p_pomodoro:'بومودورو', p_medium:'تركيز متوسط', p_long:'تركيز طويل', p_short:'جلسة قصيرة', p_custom:'جلسة مخصصة',
+  study:'مدة الدراسة', break:'مدة الاستراحة', min:'دقيقة', sec:'ثانية',
+  cycles:'عدد الدورات', cyclesHint:'الدورة الواحدة = جلسة دراسة واحدة تليها استراحة.',
+  countdown:'العد التنازلي قبل البدء', off:'بدون', secN:'{n} ث',
+  cdEach:'قبل كل مرحلة (دراسة واستراحة)', cdFirst:'عند بداية أول جلسة فقط',
+  ending:'نهاية الدورات',
+  endStudy:'تنتهي بعد آخر جلسة دراسة', endStudyHint:'الافتراضي: لا استراحة بعد الجلسة الأخيرة.',
+  endBreak:'تنتهي بعد استراحة أخيرة', endBreakHint:'تبدأ استراحة إضافية بعد الجلسة الأخيرة ثم تنتهي الدورات.',
+  sound:'تشغيل أصوات التنبيه',
+  tabSound:'الأصوات', alertsSec:'أصوات التنبيه', volume:'مستوى الصوت', play:'تجربة الصوت',
+  ev_studyStart:'بداية الدراسة', ev_studyEnd:'نهاية الدراسة', ev_breakStart:'بداية الاستراحة', ev_breakEnd:'نهاية الاستراحة',
+  s_none:'صامت', s_bell:'جرس ناعم', s_piano:'نغمة بيانو هادئة', s_glass:'جرس زجاجي', s_digital:'نغمة رقمية قصيرة',
+  s_nature:'قطرات ماء', s_soft:'تنبيه بسيط هادئ', s_tick:'نقرة خفيفة',
+  cdTick:'نقرة خفيفة مع كل رقم في العد التنازلي',
+  warnSec:'تنبيه قبل نهاية الاستراحة', warnOn:'نبّهني قبل أن تنتهي الاستراحة', warnHint:'مع إشارة صغيرة على الشاشة.',
+  warnSound:'صوت التنبيه', warnCue:'تنتهي الاستراحة بعد {n} ث',
+  ambSec:'أصوات الخلفية', ambVol:'مستوى أصوات الخلفية', ambPlay:'تشغيل أصوات الخلفية', ambStop:'إيقاف جميع الأصوات',
+  mixQuick:'مزيج جاهز، أو اختر الأصوات بنفسك وحرّك مستوى كل صوت:',
+  a_rain:'المطر', a_thunder:'مطر ورعد', a_forest:'طيور الغابة', a_waves:'أمواج البحر', a_stream:'جدول ماء',
+  a_fire:'نار الحطب', a_wind:'رياح هادئة', a_night:'أصوات ليلية', a_white:'ضوضاء بيضاء', a_brown:'ضوضاء بنية',
+  mx_rainy:'مطر ونار', mx_forest:'غابة وجدول', mx_sea:'شاطئ', mx_night:'ليل هادئ', mx_brown:'تركيز عميق',
+  ambWhen:'متى تعمل أصوات الخلفية أثناء الجلسة', dur_both:'أثناء الدراسة والاستراحة', dur_study:'أثناء الدراسة فقط',
+  ambAuto:'تشغيلها تلقائيًا عند بدء الجلسة وإيقافها عند انتهائها',
+  mixSaved:'مزيجاتي المحفوظة', mixPh:'اسم المزيج، مثل: مطر الليل', mixSave:'حفظ المزيج الحالي', mixNone:'لم تحفظ أي مزيج بعد.',
+  soundNote:'أصوات الطبيعة والأماكن تسجيلات حقيقية من مكتبة Moodist المفتوحة (رخصة CC0 ورخصة Pixabay)، تُحمَّل فقط عند تشغيلها. الضوضاء وأصوات التنبيه تُولَّد داخل المتصفح. تتوقف الأصوات إذا أُغلقت الصفحة.',
+  g_nature:'الطبيعة', g_places:'أماكن', g_things:'أشياء', g_noise:'ضوضاء',
+  a_trees:'حفيف الأشجار', a_cafe:'مقهى', a_library:'مكتبة', a_keyboard:'لوحة مفاتيح', a_typewriter:'آلة كاتبة', a_cat:'قطة تخرخر', a_chimes:'أجراس الرياح',
+  mx_roses:'حديقة الورد', mx_coding:'جلسة برمجة', mx_library:'مكتبة ممطرة',
+  saved:'إعداداتي المحفوظة', savePh:'اسم الإعداد، مثل: دراسة الألمانية', save:'حفظ الإعداد الحالي',
+  savedNone:'لم تحفظ أي إعداد بعد.', del:'حذف {name}',
+  sumStudy:'{n} × {s} دراسة = {t}', sumTotal:'المدة الكلية مع الاستراحات: {t}',
+  start:'ابدأ',
+  focus:'وقت التركيز', rest:'وقت الاستراحة', restMsg:'ابتعد عن الشاشة قليلًا، اشرب ماء، وحرّك جسمك.',
+  cycleOf:'الجلسة {c} من {n}', left:'تبقّت {n}', lastOne:'الجلسة الأخيرة', extraBreak:'استراحة ختامية',
+  pause:'إيقاف مؤقت', resume:'استئناف', paused:'متوقف مؤقتًا',
+  skipToBreak:'انتقل إلى الاستراحة', skipToStudy:'ابدأ الدراسة الآن', skipFinish:'أنهِ آخر جلسة',
+  resetPhase:'إعادة ضبط الوقت', end:'إنهاء الجلسة', endConfirm:'اضغط مرة أخرى للإنهاء',
+  plus:'+ دقيقة', minus:'− دقيقة',
+  focusSec:'وضع التركيز', autoFocus:'التحوّل إلى شاشة التركيز الكاملة عند البدء',
+  autoHide:'إخفاء أزرار التحكم بعد 3 ثوانٍ دون استخدام', autoHideHint:'تظهر مجددًا عند تحريك الماوس أو لمس الشاشة.',
+  autoFs:'تفعيل ملء الشاشة تلقائيًا عند البدء', showProgress:'إظهار شريط التقدّم ومؤشر الدورات',
+  fsEnter:'ملء الشاشة', fsExit:'الخروج من ملء الشاشة',
+  fsBlocked:'لم يسمح المتصفح بملء الشاشة تلقائيًا.', fsTry:'تفعيل ملء الشاشة', fsNone:'هذا المتصفح لا يدعم ملء الشاشة.',
+  options:'خيارات الجلسة', adjustTime:'تعديل وقت المرحلة الحالية', soundRun:'أصوات التنبيه',
+  exitFocus:'الخروج إلى الواجهة الكاملة', backFocus:'العودة إلى وضع التركيز',
+  tabTimer:'المؤقّت', tabLook:'المظهر',
+  lookMode:'الوضع', m_auto:'تلقائي حسب الجهاز', m_light:'فاتح', m_dark:'داكن',
+  lookTheme:'التصميم', pvText:'معاينة: {name}', apply:'تطبيق', cancel:'إلغاء',
+  th_tarkizo:'TARKIZO الأصلي', th_roses:'حديقة الورد', th_pastel:'باستيل', th_forest:'غابة خضراء', th_rain:'مطر ونافذة',
+  th_sea:'بحر وأمواج', th_fire:'نار الحطب', th_night:'ليلي داكن', th_code:'محرر الكود', th_minimal:'بسيط ونظيف',
+  th_beige:'بيج دافئ', th_space:'فضاء ونجوم', th_library:'مكتبة كلاسيكية',
+  lookClock:'شكل الساعة', st_digital:'رقمية', st_ring:'دائرية', st_progress:'حلقة تقدّم', st_bar:'شريط تقدّم', st_minimal:'بسيطة', st_huge:'كبيرة جدًا',
+  digitSize:'حجم الأرقام', ringThick:'سماكة الحلقة أو الشريط', barH:'شريط أفقي', barV:'شريط عمودي',
+  lookColors:'الألوان', cBg:'لون الخلفية', cDigits:'لون الأرقام', cRing:'لون الحلقة والشريط', auto:'تلقائي',
+  colorsHint:'«تلقائي» يعيد اللون الذي يأتي مع التصميم.',
+  lookBg:'الخلفية', mo_anim:'متحركة بخفة', mo_static:'ثابتة', dim:'تعتيم الخلفية',
+  calm:'تقليل الحركة', calmHint:'يوقف حركة الخلفية والانتقالات والمؤثرات.',
+  lookReset:'إعادة المظهر إلى الإعدادات الأصلية',
+  cdStudy:'تبدأ الدراسة بعد', cdBreak:'تبدأ الاستراحة بعد', go:'ابدأ!', cdSkip:'ابدأ الآن',
+  doneTitle:'أحسنت! أنهيت جميع الدورات', doneEarly:'انتهت الجلسة',
+  stStudied:'وقت الدراسة', stSessions:'جلسات دراسة مكتملة', stTotal:'المدة الكلية',
+  more1:'دورة إضافية', more2:'دورتان إضافيتان', back:'العودة إلى الإعدادات',
+  restoreTitle:'لديك جلسة لم تكتمل', restoreInfo:'{phase} · الجلسة {c} من {n} · المتبقي {rem}',
+  restoreResume:'استئناف من حيث توقفت', restoreDiscard:'تجاهل',
+  h:'س', m:'د', s:'ث', zero:'0 د', langLabel:'اللغة', settings:'الإعدادات', featured:'مميز', themeMix:'شغّل أصوات «{name}»', ready:'جاهز',
+  appSec:'التطبيق', install:'تثبيت TARKIZO كتطبيق', iosHint:'على الآيفون: افتح الموقع في Safari، ثم «مشاركة» ← «إضافة إلى الشاشة الرئيسية».', offlineSave:'حفظ كل الأصوات للاستخدام بدون إنترنت', offlineProgress:'جارٍ الحفظ… {d} من {n}', offlineDone:'تم. الموقع وكل الأصوات تعمل الآن بدون إنترنت.', offlineFail:'تعذّر حفظ بعض الأصوات. تأكد من الاتصال وحاول مرة أخرى.',
+  tabTasks:'المهام', tasksAdd:'مهمة جديدة', taskPh:'اسم المهمة، مثل: مراجعة الرياضيات', taskTarget:'الجلسات', add:'إضافة',
+  tasksOpen:'مهامي', tasksDone:'مهام منجزة', taskNone:'لا توجد مهام بعد. أضف مهمة لتعرف على ماذا تعمل في كل جلسة.',
+  taskPick:'اجعلها المهمة الحالية', taskUp:'تحريك للأعلى', taskDown:'تحريك للأسفل', taskComplete:'تم الإنجاز', taskUndo:'إرجاع إلى المهام',
+  taskDelete:'حذف المهمة', taskNotes:'ملاحظات', taskNotesPh:'ملاحظات اختيارية…', sessionsDone:'{d} من {n} جلسات', taskReached:'وصلت إلى الهدف',
+  showTaskFocus:'إظهار اسم المهمة الحالية في وضع التركيز', pickTask:'+ اختر مهمة لهذه الجلسة', doneTask:'المهمة: {name} · {d} من {n} جلسات',
+  progress:'التقدّم', backHome:'رجوع', per_day:'اليوم', per_week:'آخر 7 أيام', per_month:'آخر 30 يومًا', per_all:'الكل',
+  kTime:'وقت الدراسة', kSessions:'جلسات مكتملة', kLongest:'أطول جلسة', kRounds:'جولات مكتملة', kRoundsHint:'مرات أنهيت فيها كل الدورات',
+  goalLbl:'الهدف اليومي', goalToday:'اليوم: {a} من {b}', goalDone:'حققت هدف اليوم', goalPer:'هدف هذه الفترة: {b} · الفعلي: {a}',
+  chartTitle:'وقت الدراسة يوميًا', chartWeeks:'وقت الدراسة أسبوعيًا', goalLine:'الهدف',
+  streak:'أيام الدراسة المتتالية', streakNow:'أيام متتالية: {n}', streakBest:'الأفضل: {n}', showStreak:'إظهار أيام الدراسة المتتالية',
+  byTask:'حسب المهمة', noTask:'بدون مهمة', emptyStats:'لا توجد جلسات بعد. ابدأ جلسة دراسة وسيظهر تقدّمك هنا.',
+  focusStat:'إظهار وقت دراسة اليوم بشكل صغير في وضع التركيز', todayShort:'اليوم {t}',
+  dataSec:'بياناتك', dataNote:'كل البيانات محفوظة على هذا الجهاز فقط، بدون حساب.', exportBtn:'نسخ البيانات', exported:'نُسخت البيانات. احفظها في ملف نصي.',
+  exportManual:'انسخ النص الظاهر في المربع واحفظه في ملف.', importBtn:'استيراد من ملف', importPaste:'أو الصق البيانات هنا ثم اضغط «استيراد»',
+  importGo:'استيراد', imported:'تم الاستيراد.', importBad:'البيانات غير صالحة. تأكد أنها من TARKIZO.', clearBtn:'مسح كل البيانات المحلية',
+  clearConfirm:'اضغط مرة أخرى لمسح كل شيء', wd:'الأحد,الإثنين,الثلاثاء,الأربعاء,الخميس,الجمعة,السبت', wdS:'ح,ن,ث,ر,خ,ج,س', allSettings:'كل الإعدادات', close:'إغلاق', resize:'تغيير عرض اللوحة'
+},
+
+en: {
+  tagline:'A calm timer for study and focus',
+  mode:'Study mode', p_pomodoro:'Pomodoro', p_medium:'Medium focus', p_long:'Long focus', p_short:'Short session', p_custom:'Custom',
+  study:'Study time', break:'Break time', min:'min', sec:'sec',
+  cycles:'Number of cycles', cyclesHint:'One cycle = one study session followed by a break.',
+  countdown:'Countdown before starting', off:'Off', secN:'{n} s',
+  cdEach:'Before every phase (study and break)', cdFirst:'Only before the first session',
+  ending:'End of the cycles',
+  endStudy:'End after the last study session', endStudyHint:'Default: no break after the last session.',
+  endBreak:'End after a final break', endBreakHint:'One more break follows the last session, then the cycles end.',
+  sound:'Play alert sounds',
+  tabSound:'Sounds', alertsSec:'Alert sounds', volume:'Volume', play:'Play sound',
+  ev_studyStart:'Study starts', ev_studyEnd:'Study ends', ev_breakStart:'Break starts', ev_breakEnd:'Break ends',
+  s_none:'Silent', s_bell:'Soft bell', s_piano:'Calm piano', s_glass:'Glass bell', s_digital:'Short digital beep',
+  s_nature:'Water drops', s_soft:'Simple soft tone', s_tick:'Light tick',
+  cdTick:'Light tick with each countdown number',
+  warnSec:'Alert before the break ends', warnOn:'Alert me before the break ends', warnHint:'With a small sign on the screen.',
+  warnSound:'Alert sound', warnCue:'Break ends in {n} s',
+  ambSec:'Background sounds', ambVol:'Background volume', ambPlay:'Play background sounds', ambStop:'Stop all sounds',
+  mixQuick:'Pick a ready mix, or choose sounds yourself and set each level:',
+  a_rain:'Rain', a_thunder:'Rain and thunder', a_forest:'Forest birds', a_waves:'Sea waves', a_stream:'Stream',
+  a_fire:'Fireplace', a_wind:'Gentle wind', a_night:'Night sounds', a_white:'White noise', a_brown:'Brown noise',
+  mx_rainy:'Rain & fire', mx_forest:'Forest & stream', mx_sea:'Beach', mx_night:'Quiet night', mx_brown:'Deep focus',
+  ambWhen:'When background sounds play during a session', dur_both:'During study and breaks', dur_study:'During study only',
+  ambAuto:'Start them with the session and stop them when it ends',
+  mixSaved:'My saved mixes', mixPh:'Mix name, e.g. Night rain', mixSave:'Save current mix', mixNone:'No saved mixes yet.',
+  soundNote:'Nature and place sounds are real recordings from the open Moodist library (CC0 and Pixabay License), loaded only when you turn them on. Noise and alert sounds are generated in your browser. Sounds stop when the page is closed.',
+  g_nature:'Nature', g_places:'Places', g_things:'Things', g_noise:'Noise',
+  a_trees:'Rustling trees', a_cafe:'Café', a_library:'Library', a_keyboard:'Keyboard', a_typewriter:'Typewriter', a_cat:'Purring cat', a_chimes:'Wind chimes',
+  mx_roses:'Rose garden', mx_coding:'Coding session', mx_library:'Rainy library',
+  saved:'My saved settings', savePh:'Setting name, e.g. German study', save:'Save current settings',
+  savedNone:'No saved settings yet.', del:'Delete {name}',
+  sumStudy:'{n} × {s} study = {t}', sumTotal:'Total with breaks: {t}',
+  start:'Start',
+  focus:'Focus time', rest:'Break time', restMsg:'Step away from the screen, drink some water and stretch.',
+  cycleOf:'Session {c} of {n}', left:'{n} left', lastOne:'Last session', extraBreak:'Final break',
+  pause:'Pause', resume:'Resume', paused:'Paused',
+  skipToBreak:'Go to break', skipToStudy:'Start studying now', skipFinish:'Finish last session',
+  resetPhase:'Reset time', end:'End session', endConfirm:'Tap again to end',
+  plus:'+1 min', minus:'−1 min',
+  focusSec:'Focus mode', autoFocus:'Switch to the full focus screen when starting',
+  autoHide:'Hide controls after 3 seconds without use', autoHideHint:'They come back when you move the mouse or touch the screen.',
+  autoFs:'Go fullscreen automatically when starting', showProgress:'Show progress bar and cycle dots',
+  fsEnter:'Fullscreen', fsExit:'Exit fullscreen',
+  fsBlocked:'The browser did not allow automatic fullscreen.', fsTry:'Go fullscreen', fsNone:'This browser does not support fullscreen.',
+  options:'Session options', adjustTime:'Adjust the current phase', soundRun:'Alert sounds',
+  exitFocus:'Back to the full interface', backFocus:'Back to focus mode',
+  tabTimer:'Timer', tabLook:'Appearance',
+  lookMode:'Mode', m_auto:'Auto (device)', m_light:'Light', m_dark:'Dark',
+  lookTheme:'Theme', pvText:'Preview: {name}', apply:'Apply', cancel:'Cancel',
+  th_tarkizo:'TARKIZO original', th_roses:'Rose garden', th_pastel:'Pastel', th_forest:'Green forest', th_rain:'Rainy window',
+  th_sea:'Sea and waves', th_fire:'Fireplace', th_night:'Dark night', th_code:'Code editor', th_minimal:'Clean and simple',
+  th_beige:'Warm beige', th_space:'Space and stars', th_library:'Classic library',
+  lookClock:'Clock style', st_digital:'Digital', st_ring:'Dial', st_progress:'Progress ring', st_bar:'Progress bar', st_minimal:'Minimal', st_huge:'Extra large',
+  digitSize:'Digit size', ringThick:'Ring or bar thickness', barH:'Horizontal bar', barV:'Vertical bar',
+  lookColors:'Colors', cBg:'Background color', cDigits:'Digit color', cRing:'Ring and bar color', auto:'Auto',
+  colorsHint:'“Auto” restores the color that comes with the theme.',
+  lookBg:'Background', mo_anim:'Gently animated', mo_static:'Still', dim:'Dim background',
+  calm:'Reduce motion', calmHint:'Stops background animation, transitions and effects.',
+  lookReset:'Reset appearance to defaults',
+  cdStudy:'Study starts in', cdBreak:'Break starts in', go:'Go!', cdSkip:'Start now',
+  doneTitle:'Well done! You finished all cycles', doneEarly:'Session ended',
+  stStudied:'Study time', stSessions:'Study sessions completed', stTotal:'Total time',
+  more1:'One more cycle', more2:'Two more cycles', back:'Back to settings',
+  restoreTitle:'You have an unfinished session', restoreInfo:'{phase} · Session {c} of {n} · {rem} left',
+  restoreResume:'Resume where you left off', restoreDiscard:'Discard',
+  h:'h', m:'min', s:'s', zero:'0 min', langLabel:'Language', settings:'Settings', featured:'Featured', themeMix:'Play “{name}” sounds', ready:'Ready',
+  appSec:'App', install:'Install TARKIZO as an app', iosHint:'On iPhone: open the site in Safari, then Share → Add to Home Screen.', offlineSave:'Save all sounds for offline use', offlineProgress:'Saving… {d} of {n}', offlineDone:'Done. The site and all sounds now work without internet.', offlineFail:'Some sounds could not be saved. Check your connection and try again.',
+  tabTasks:'Tasks', tasksAdd:'New task', taskPh:'Task name, e.g. Review maths', taskTarget:'Sessions', add:'Add',
+  tasksOpen:'My tasks', tasksDone:'Completed tasks', taskNone:'No tasks yet. Add one so you know what each session is for.',
+  taskPick:'Make this the current task', taskUp:'Move up', taskDown:'Move down', taskComplete:'Mark as done', taskUndo:'Back to tasks',
+  taskDelete:'Delete task', taskNotes:'Notes', taskNotesPh:'Optional notes…', sessionsDone:'{d} of {n} sessions', taskReached:'Goal reached',
+  showTaskFocus:'Show the current task in focus mode', pickTask:'+ Pick a task for this session', doneTask:'Task: {name} · {d} of {n} sessions',
+  progress:'Progress', backHome:'Back', per_day:'Today', per_week:'Last 7 days', per_month:'Last 30 days', per_all:'All time',
+  kTime:'Study time', kSessions:'Sessions completed', kLongest:'Longest session', kRounds:'Rounds completed', kRoundsHint:'Times you finished all cycles',
+  goalLbl:'Daily goal', goalToday:'Today: {a} of {b}', goalDone:'Goal reached today', goalPer:'Goal for this period: {b} · Actual: {a}',
+  chartTitle:'Study time per day', chartWeeks:'Study time per week', goalLine:'Goal',
+  streak:'Study streak', streakNow:'Days in a row: {n}', streakBest:'Best: {n}', showStreak:'Show the study streak',
+  byTask:'By task', noTask:'No task', emptyStats:'No sessions yet. Start a study session and your progress will show up here.',
+  focusStat:'Show today’s study time small in focus mode', todayShort:'Today {t}',
+  dataSec:'Your data', dataNote:'All data stays on this device only, no account needed.', exportBtn:'Copy data', exported:'Data copied. Save it in a text file.',
+  exportManual:'Copy the text in the box and save it in a file.', importBtn:'Import from file', importPaste:'Or paste data here, then press Import',
+  importGo:'Import', imported:'Imported.', importBad:'This data is not valid. Make sure it comes from TARKIZO.', clearBtn:'Delete all local data',
+  clearConfirm:'Tap again to delete everything', wd:'Sun,Mon,Tue,Wed,Thu,Fri,Sat', wdS:'S,M,T,W,T,F,S', allSettings:'All settings', close:'Close', resize:'Resize panel'
+},
+
+de: {
+  tagline:'Ein ruhiger Timer zum Lernen und Fokussieren',
+  mode:'Lernmodus', p_pomodoro:'Pomodoro', p_medium:'Mittlerer Fokus', p_long:'Langer Fokus', p_short:'Kurze Einheit', p_custom:'Eigene Einheit',
+  study:'Lernzeit', break:'Pausenzeit', min:'Min.', sec:'Sek.',
+  cycles:'Anzahl der Durchgänge', cyclesHint:'Ein Durchgang = eine Lerneinheit, gefolgt von einer Pause.',
+  countdown:'Countdown vor dem Start', off:'Aus', secN:'{n} s',
+  cdEach:'Vor jeder Phase (Lernen und Pause)', cdFirst:'Nur vor der ersten Einheit',
+  ending:'Ende der Durchgänge',
+  endStudy:'Nach der letzten Lerneinheit enden', endStudyHint:'Standard: keine Pause nach der letzten Einheit.',
+  endBreak:'Nach einer letzten Pause enden', endBreakHint:'Nach der letzten Einheit folgt noch eine Pause, dann enden die Durchgänge.',
+  sound:'Signaltöne abspielen',
+  tabSound:'Töne', alertsSec:'Signaltöne', volume:'Lautstärke', play:'Ton anhören',
+  ev_studyStart:'Lernbeginn', ev_studyEnd:'Lernende', ev_breakStart:'Pausenbeginn', ev_breakEnd:'Pausenende',
+  s_none:'Stumm', s_bell:'Sanfte Glocke', s_piano:'Ruhiges Klavier', s_glass:'Glasglocke', s_digital:'Kurzer Digitalton',
+  s_nature:'Wassertropfen', s_soft:'Einfacher sanfter Ton', s_tick:'Leises Klicken',
+  cdTick:'Leises Klicken bei jeder Countdown-Zahl',
+  warnSec:'Hinweis vor Pausenende', warnOn:'Vor dem Pausenende benachrichtigen', warnHint:'Mit einem kleinen Zeichen auf dem Bildschirm.',
+  warnSound:'Hinweiston', warnCue:'Pause endet in {n} s',
+  ambSec:'Hintergrundklänge', ambVol:'Lautstärke Hintergrund', ambPlay:'Hintergrundklänge abspielen', ambStop:'Alle Töne stoppen',
+  mixQuick:'Fertige Mischung wählen oder Klänge selbst auswählen und einzeln regeln:',
+  a_rain:'Regen', a_thunder:'Regen und Donner', a_forest:'Waldvögel', a_waves:'Meereswellen', a_stream:'Bach',
+  a_fire:'Kaminfeuer', a_wind:'Sanfter Wind', a_night:'Nachtgeräusche', a_white:'Weißes Rauschen', a_brown:'Braunes Rauschen',
+  mx_rainy:'Regen & Feuer', mx_forest:'Wald & Bach', mx_sea:'Strand', mx_night:'Stille Nacht', mx_brown:'Tiefer Fokus',
+  ambWhen:'Wann Hintergrundklänge während einer Sitzung laufen', dur_both:'Beim Lernen und in Pausen', dur_study:'Nur beim Lernen',
+  ambAuto:'Mit der Sitzung starten und am Ende stoppen',
+  mixSaved:'Meine gespeicherten Mischungen', mixPh:'Name, z. B. Nachtregen', mixSave:'Aktuelle Mischung speichern', mixNone:'Noch keine Mischungen gespeichert.',
+  soundNote:'Natur- und Ortsklänge sind echte Aufnahmen aus der offenen Moodist-Bibliothek (CC0 und Pixabay-Lizenz) und werden erst beim Einschalten geladen. Rauschen und Signaltöne entstehen im Browser. Die Töne stoppen, wenn die Seite geschlossen wird.',
+  g_nature:'Natur', g_places:'Orte', g_things:'Dinge', g_noise:'Rauschen',
+  a_trees:'Rauschende Bäume', a_cafe:'Café', a_library:'Bibliothek', a_keyboard:'Tastatur', a_typewriter:'Schreibmaschine', a_cat:'Schnurrende Katze', a_chimes:'Windspiel',
+  mx_roses:'Rosengarten', mx_coding:'Coding-Session', mx_library:'Bibliothek im Regen',
+  saved:'Meine gespeicherten Einstellungen', savePh:'Name, z. B. Deutsch lernen', save:'Aktuelle Einstellungen speichern',
+  savedNone:'Noch keine Einstellungen gespeichert.', del:'{name} löschen',
+  sumStudy:'{n} × {s} Lernen = {t}', sumTotal:'Gesamt mit Pausen: {t}',
+  start:'Starten',
+  focus:'Fokuszeit', rest:'Pausenzeit', restMsg:'Geh kurz weg vom Bildschirm, trink Wasser und streck dich.',
+  cycleOf:'Einheit {c} von {n}', left:'noch {n}', lastOne:'Letzte Einheit', extraBreak:'Abschlusspause',
+  pause:'Pausieren', resume:'Fortsetzen', paused:'Pausiert',
+  skipToBreak:'Zur Pause', skipToStudy:'Jetzt lernen', skipFinish:'Letzte Einheit beenden',
+  resetPhase:'Zeit zurücksetzen', end:'Sitzung beenden', endConfirm:'Zum Beenden erneut tippen',
+  plus:'+1 Min.', minus:'−1 Min.',
+  focusSec:'Fokusmodus', autoFocus:'Beim Start zum Fokus-Vollbild wechseln',
+  autoHide:'Bedienelemente nach 3 Sekunden ausblenden', autoHideHint:'Sie erscheinen wieder, wenn du die Maus bewegst oder den Bildschirm berührst.',
+  autoFs:'Beim Start automatisch Vollbild', showProgress:'Fortschrittsbalken und Durchgangspunkte zeigen',
+  fsEnter:'Vollbild', fsExit:'Vollbild beenden',
+  fsBlocked:'Der Browser hat das automatische Vollbild nicht erlaubt.', fsTry:'Vollbild aktivieren', fsNone:'Dieser Browser unterstützt kein Vollbild.',
+  options:'Sitzungsoptionen', adjustTime:'Aktuelle Phase anpassen', soundRun:'Signaltöne',
+  exitFocus:'Zur vollen Ansicht', backFocus:'Zurück zum Fokusmodus',
+  tabTimer:'Timer', tabLook:'Aussehen',
+  lookMode:'Modus', m_auto:'Automatisch (Gerät)', m_light:'Hell', m_dark:'Dunkel',
+  lookTheme:'Design', pvText:'Vorschau: {name}', apply:'Übernehmen', cancel:'Abbrechen',
+  th_tarkizo:'TARKIZO Original', th_roses:'Rosengarten', th_pastel:'Pastell', th_forest:'Grüner Wald', th_rain:'Regenfenster',
+  th_sea:'Meer und Wellen', th_fire:'Kaminfeuer', th_night:'Dunkle Nacht', th_code:'Code-Editor', th_minimal:'Schlicht und klar',
+  th_beige:'Warmes Beige', th_space:'Weltall und Sterne', th_library:'Klassische Bibliothek',
+  lookClock:'Uhrform', st_digital:'Digital', st_ring:'Zifferblatt', st_progress:'Fortschrittsring', st_bar:'Fortschrittsbalken', st_minimal:'Schlicht', st_huge:'Extra groß',
+  digitSize:'Ziffergröße', ringThick:'Stärke von Ring oder Balken', barH:'Waagerechter Balken', barV:'Senkrechter Balken',
+  lookColors:'Farben', cBg:'Hintergrundfarbe', cDigits:'Ziffernfarbe', cRing:'Ring- und Balkenfarbe', auto:'Auto',
+  colorsHint:'„Auto“ stellt die Farbe des Designs wieder her.',
+  lookBg:'Hintergrund', mo_anim:'Sanft bewegt', mo_static:'Ruhend', dim:'Hintergrund abdunkeln',
+  calm:'Bewegung reduzieren', calmHint:'Stoppt Hintergrundanimation, Übergänge und Effekte.',
+  lookReset:'Aussehen zurücksetzen',
+  cdStudy:'Lernen beginnt in', cdBreak:'Pause beginnt in', go:'Los!', cdSkip:'Jetzt starten',
+  doneTitle:'Gut gemacht! Alle Durchgänge geschafft', doneEarly:'Sitzung beendet',
+  stStudied:'Lernzeit', stSessions:'Abgeschlossene Lerneinheiten', stTotal:'Gesamtzeit',
+  more1:'Noch ein Durchgang', more2:'Noch zwei Durchgänge', back:'Zurück zu den Einstellungen',
+  restoreTitle:'Du hast eine unvollendete Sitzung', restoreInfo:'{phase} · Einheit {c} von {n} · noch {rem}',
+  restoreResume:'Dort weitermachen', restoreDiscard:'Verwerfen',
+  h:'Std.', m:'Min.', s:'Sek.', zero:'0 Min.', langLabel:'Sprache', settings:'Einstellungen', featured:'Empfohlen', themeMix:'„{name}“-Klänge abspielen', ready:'Bereit',
+  appSec:'App', install:'TARKIZO als App installieren', iosHint:'Auf dem iPhone: Seite in Safari öffnen, dann Teilen → Zum Home-Bildschirm.', offlineSave:'Alle Klänge für die Offline-Nutzung speichern', offlineProgress:'Wird gespeichert… {d} von {n}', offlineDone:'Fertig. Die Seite und alle Klänge funktionieren jetzt ohne Internet.', offlineFail:'Einige Klänge konnten nicht gespeichert werden. Prüfe die Verbindung und versuche es erneut.',
+  tabTasks:'Aufgaben', tasksAdd:'Neue Aufgabe', taskPh:'Aufgabe, z. B. Mathe wiederholen', taskTarget:'Einheiten', add:'Hinzufügen',
+  tasksOpen:'Meine Aufgaben', tasksDone:'Erledigte Aufgaben', taskNone:'Noch keine Aufgaben. Füge eine hinzu, damit du weißt, wofür jede Einheit ist.',
+  taskPick:'Als aktuelle Aufgabe wählen', taskUp:'Nach oben', taskDown:'Nach unten', taskComplete:'Als erledigt markieren', taskUndo:'Zurück zu den Aufgaben',
+  taskDelete:'Aufgabe löschen', taskNotes:'Notizen', taskNotesPh:'Optionale Notizen…', sessionsDone:'{d} von {n} Einheiten', taskReached:'Ziel erreicht',
+  showTaskFocus:'Aktuelle Aufgabe im Fokusmodus anzeigen', pickTask:'+ Aufgabe für diese Sitzung wählen', doneTask:'Aufgabe: {name} · {d} von {n} Einheiten',
+  progress:'Fortschritt', backHome:'Zurück', per_day:'Heute', per_week:'Letzte 7 Tage', per_month:'Letzte 30 Tage', per_all:'Gesamt',
+  kTime:'Lernzeit', kSessions:'Abgeschlossene Einheiten', kLongest:'Längste Einheit', kRounds:'Abgeschlossene Runden', kRoundsHint:'Wie oft du alle Durchgänge geschafft hast',
+  goalLbl:'Tagesziel', goalToday:'Heute: {a} von {b}', goalDone:'Tagesziel erreicht', goalPer:'Ziel für diesen Zeitraum: {b} · Tatsächlich: {a}',
+  chartTitle:'Lernzeit pro Tag', chartWeeks:'Lernzeit pro Woche', goalLine:'Ziel',
+  streak:'Lernserie', streakNow:'Tage in Folge: {n}', streakBest:'Rekord: {n}', showStreak:'Lernserie anzeigen',
+  byTask:'Nach Aufgabe', noTask:'Ohne Aufgabe', emptyStats:'Noch keine Einheiten. Starte eine Lerneinheit, dann erscheint dein Fortschritt hier.',
+  focusStat:'Heutige Lernzeit klein im Fokusmodus anzeigen', todayShort:'Heute {t}',
+  dataSec:'Deine Daten', dataNote:'Alle Daten bleiben nur auf diesem Gerät, ohne Konto.', exportBtn:'Daten kopieren', exported:'Daten kopiert. Speichere sie in einer Textdatei.',
+  exportManual:'Kopiere den Text im Feld und speichere ihn in einer Datei.', importBtn:'Aus Datei importieren', importPaste:'Oder Daten hier einfügen und „Importieren“ drücken',
+  importGo:'Importieren', imported:'Importiert.', importBad:'Die Daten sind ungültig. Prüfe, ob sie von TARKIZO stammen.', clearBtn:'Alle lokalen Daten löschen',
+  clearConfirm:'Zum Löschen erneut tippen', wd:'So,Mo,Di,Mi,Do,Fr,Sa', wdS:'S,M,D,M,D,F,S', allSettings:'Alle Einstellungen', close:'Schließen', resize:'Breite ändern'
+},
+
+/* Kurmancî: first draft, should be reviewed by a native speaker */
+ku: {
+  tagline:'Demjimêreke aram ji bo xwendin û baldariyê',
+  mode:'Awayê xwendinê', p_pomodoro:'Pomodoro', p_medium:'Baldariya navîn', p_long:'Baldariya dirêj', p_short:'Danişîna kurt', p_custom:'Danişîna taybet',
+  study:'Dema xwendinê', break:'Dema bêhnvedanê', min:'deqîqe', sec:'çirke',
+  cycles:'Hejmara dewran', cyclesHint:'Dewrek = danişîneke xwendinê û li pey wê bêhnvedanek.',
+  countdown:'Jimartina berevajî berî destpêkê', off:'Girtî', secN:'{n} çirke',
+  cdEach:'Berî her qonaxê (xwendin û bêhnvedan)', cdFirst:'Tenê berî danişîna yekem',
+  ending:'Dawiya dewran',
+  endStudy:'Piştî danişîna xwendinê ya dawî biqede', endStudyHint:'Standard: piştî danişîna dawî bêhnvedan tune.',
+  endBreak:'Piştî bêhnvedaneke dawî biqede', endBreakHint:'Piştî danişîna dawî bêhnvedanek din tê, paşê dewr diqedin.',
+  sound:'Dengên hişyariyê lê bide',
+  tabSound:'Deng', alertsSec:'Dengên hişyariyê', volume:'Asta dengê', play:'Dengê biceribîne',
+  ev_studyStart:'Destpêka xwendinê', ev_studyEnd:'Dawiya xwendinê', ev_breakStart:'Destpêka bêhnvedanê', ev_breakEnd:'Dawiya bêhnvedanê',
+  s_none:'Bêdeng', s_bell:'Zengila nerm', s_piano:'Piyanoya aram', s_glass:'Zengila camî', s_digital:'Dengê dîjîtal ê kurt',
+  s_nature:'Dilopên avê', s_soft:'Dengê nerm ê sade', s_tick:'Tiqtiqa sivik',
+  cdTick:'Bi her hejmara jimartinê re tiqtiqeke sivik',
+  warnSec:'Hişyarî berî dawiya bêhnvedanê', warnOn:'Berî ku bêhnvedan biqede min hişyar bike', warnHint:'Bi nîşaneke biçûk li ser ekranê.',
+  warnSound:'Dengê hişyariyê', warnCue:'Bêhnvedan di {n} çirkeyan de diqede',
+  ambSec:'Dengên paşxaneyê', ambVol:'Asta dengên paşxaneyê', ambPlay:'Dengên paşxaneyê lê bide', ambStop:'Hemû dengan rawestîne',
+  mixQuick:'Tevliheviyeke amade hilbijêre, an jî dengan bi xwe hilbijêre û asta her yekê eyar bike:',
+  a_rain:'Baran', a_thunder:'Baran û birûsk', a_forest:'Çûkên daristanê', a_waves:'Pêlên deryayê', a_stream:'Çem',
+  a_fire:'Agirê êzingan', a_wind:'Bayê nerm', a_night:'Dengên şevê', a_white:'Dengê spî', a_brown:'Dengê qehweyî',
+  mx_rainy:'Baran û agir', mx_forest:'Daristan û çem', mx_sea:'Perav', mx_night:'Şeva aram', mx_brown:'Baldariya kûr',
+  ambWhen:'Di danişînê de dengên paşxaneyê kengî lê didin', dur_both:'Di xwendin û bêhnvedanê de', dur_study:'Tenê di xwendinê de',
+  ambAuto:'Bi destpêka danişînê re dest pê bike û di dawiyê de rawestîne',
+  mixSaved:'Tevliheviyên min ên tomarkirî', mixPh:'Navê tevliheviyê, mînak: Barana şevê', mixSave:'Tevliheviya niha tomar bike', mixNone:'Hîn tu tevlihevî tomar nekiriye.',
+  soundNote:'Dengên xwezayê û cihan tomarên rastîn in ji pirtûkxaneya vekirî ya Moodist (CC0 û lîsansa Pixabay), tenê dema tu wan vekî têne barkirin. Deng û dengên hişyariyê di gerokê de têne çêkirin. Dema rûpel were girtin deng radiwestin.',
+  g_nature:'Xweza', g_places:'Cih', g_things:'Tişt', g_noise:'Deng',
+  a_trees:'Xişxişa daran', a_cafe:'Qehwexane', a_library:'Pirtûkxane', a_keyboard:'Klavye', a_typewriter:'Makîneya nivîsînê', a_cat:'Pisîka ku dixurxure', a_chimes:'Zengilên bayê',
+  mx_roses:'Baxçeyê gulan', mx_coding:'Danişîna kodkirinê', mx_library:'Pirtûkxaneya baranî',
+  saved:'Mîhengên min ên tomarkirî', savePh:'Navê mîhengê, mînak: Xwendina almanî', save:'Mîhengên niha tomar bike',
+  savedNone:'Hîn tu mîheng tomar nekiriye.', del:'{name} jê bibe',
+  sumStudy:'{n} × {s} xwendin = {t}', sumTotal:'Bi bêhnvedanan re bi giştî: {t}',
+  start:'Dest pê bike',
+  focus:'Dema xwendinê', rest:'Dema bêhnvedanê', restMsg:'Hinekî ji ekranê dûr keve, avê vexwe û laşê xwe bilivîne.',
+  cycleOf:'Danişîna {c} ji {n}', left:'{n} man', lastOne:'Danişîna dawî', extraBreak:'Bêhnvedana dawî',
+  pause:'Bisekinîne', resume:'Bidomîne', paused:'Sekinî',
+  skipToBreak:'Derbasî bêhnvedanê bibe', skipToStudy:'Niha dest bi xwendinê bike', skipFinish:'Danişîna dawî biqedîne',
+  resetPhase:'Demê ji nû ve eyar bike', end:'Danişînê biqedîne', endConfirm:'Ji bo qedandinê dîsa bitikîne',
+  plus:'+1 deq', minus:'−1 deq',
+  focusSec:'Awayê baldariyê', autoFocus:'Di destpêkê de derbasî ekrana baldariyê ya tevahî bibe',
+  autoHide:'Bişkokan piştî 3 çirkeyan bêkarînê veşêre', autoHideHint:'Dema ku tu mişkê bilivînî an li ekranê bidî, dîsa xuya dibin.',
+  autoFs:'Di destpêkê de bixweber ekrana tijî', showProgress:'Darika pêşveçûnê û xalên dewran nîşan bide',
+  fsEnter:'Ekrana tijî', fsExit:'Ji ekrana tijî derkeve',
+  fsBlocked:'Gerokê destûr neda ekrana tijî ya bixweber.', fsTry:'Ekrana tijî veke', fsNone:'Ev gerok piştgiriya ekrana tijî nake.',
+  options:'Vebijarkên danişînê', adjustTime:'Dema qonaxa niha eyar bike', soundRun:'Dengên hişyariyê',
+  exitFocus:'Vegere navrûya tevahî', backFocus:'Vegere awayê baldariyê',
+  tabTimer:'Demjimêr', tabLook:'Dîmen',
+  lookMode:'Awa', m_auto:'Bixweber (li gorî amûrê)', m_light:'Ronî', m_dark:'Tarî',
+  lookTheme:'Sêwiran', pvText:'Pêşdîtin: {name}', apply:'Bicîh bîne', cancel:'Betal bike',
+  th_tarkizo:'TARKIZO ya resen', th_roses:'Baxçeyê gulan', th_pastel:'Pastel', th_forest:'Daristana kesk', th_rain:'Pencere û baran',
+  th_sea:'Derya û pêl', th_fire:'Agirê êzingan', th_night:'Şeva tarî', th_code:'Edîtora kodê', th_minimal:'Sade û paqij',
+  th_beige:'Bejê germ', th_space:'Valahî û stêrk', th_library:'Pirtûkxaneya klasîk',
+  lookClock:'Şiklê demjimêrê', st_digital:'Dîjîtal', st_ring:'Gilover', st_progress:'Xeleka pêşveçûnê', st_bar:'Darika pêşveçûnê', st_minimal:'Sade', st_huge:'Pir mezin',
+  digitSize:'Mezinahiya hejmaran', ringThick:'Stûriya xelekê an darikê', barH:'Darika berwar', barV:'Darika stûnî',
+  lookColors:'Reng', cBg:'Rengê paşxaneyê', cDigits:'Rengê hejmaran', cRing:'Rengê xelek û darikê', auto:'Bixweber',
+  colorsHint:'«Bixweber» rengê ku bi sêwiranê re tê vedigerîne.',
+  lookBg:'Paşxane', mo_anim:'Bi nermî diliv', mo_static:'Sabit', dim:'Tarîkirina paşxaneyê',
+  calm:'Livê kêm bike', calmHint:'Liva paşxaneyê, derbasbûn û efektan radiwestîne.',
+  lookReset:'Dîmenê vegerîne mîhengên destpêkê',
+  cdStudy:'Xwendin dest pê dike…', cdBreak:'Bêhnvedan dest pê dike…', go:'Dest pê bike!', cdSkip:'Niha dest pê bike',
+  doneTitle:'Aferin! Te hemû dewr qedandin', doneEarly:'Danişîn qediya',
+  stStudied:'Dema xwendinê', stSessions:'Danişînên xwendinê yên qediyayî', stTotal:'Dema giştî',
+  more1:'Dewreke din', more2:'Du dewrên din', back:'Vegere mîhengan',
+  restoreTitle:'Danişîneke te ya neqediyayî heye', restoreInfo:'{phase} · Danişîna {c} ji {n} · {rem} ma',
+  restoreResume:'Ji cihê ku te hiştibû bidomîne', restoreDiscard:'Paşguh bike',
+  h:'st', m:'deq', s:'çrk', zero:'0 deq', langLabel:'Ziman', settings:'Mîheng', featured:'Taybet', themeMix:'Dengên «{name}» lê bide', ready:'Amade',
+  appSec:'Sepan', install:'TARKIZO wek sepan saz bike', iosHint:'Li ser iPhone: malperê di Safari de veke, paşê «Parve bike» ← «Li ekrana sereke zêde bike».', offlineSave:'Hemû dengan ji bo bikaranîna bê înternet tomar bike', offlineProgress:'Tê tomarkirin… {d} ji {n}', offlineDone:'Temam. Malper û hemû deng niha bê înternet dixebitin.', offlineFail:'Hin deng nehatin tomarkirin. Girêdanê kontrol bike û dîsa biceribîne.',
+  tabTasks:'Kar', tasksAdd:'Karekî nû', taskPh:'Navê karê, mînak: Dubarekirina matematîkê', taskTarget:'Danişîn', add:'Zêde bike',
+  tasksOpen:'Karên min', tasksDone:'Karên qediyayî', taskNone:'Hîn tu kar tune. Karekî zêde bike da ku bizanî her danişîn ji bo çi ye.',
+  taskPick:'Bike karê niha', taskUp:'Bibe jor', taskDown:'Bibe jêr', taskComplete:'Qediya', taskUndo:'Vegerîne nav karan',
+  taskDelete:'Karê jê bibe', taskNotes:'Not', taskNotesPh:'Notên vebijarkî…', sessionsDone:'{d} ji {n} danişînan', taskReached:'Armanc hat bidestxistin',
+  showTaskFocus:'Navê karê niha di awayê baldariyê de nîşan bide', pickTask:'+ Ji bo vê danişînê karekî hilbijêre', doneTask:'Kar: {name} · {d} ji {n} danişînan',
+  progress:'Pêşveçûn', backHome:'Vegere', per_day:'Îro', per_week:'7 rojên dawî', per_month:'30 rojên dawî', per_all:'Hemû',
+  kTime:'Dema xwendinê', kSessions:'Danişînên qediyayî', kLongest:'Danişîna herî dirêj', kRounds:'Gerên qediyayî', kRoundsHint:'Carên ku te hemû dewr qedandin',
+  goalLbl:'Armanca rojane', goalToday:'Îro: {a} ji {b}', goalDone:'Te armanca îro bi cih anî', goalPer:'Armanca vê heyamê: {b} · Rastî: {a}',
+  chartTitle:'Dema xwendinê her roj', chartWeeks:'Dema xwendinê her hefte', goalLine:'Armanc',
+  streak:'Rojên xwendinê yên li pey hev', streakNow:'Rojên li pey hev: {n}', streakBest:'Ya herî baş: {n}', showStreak:'Rojên li pey hev nîşan bide',
+  byTask:'Li gorî karan', noTask:'Bê kar', emptyStats:'Hîn tu danişîn tune. Danişîneke xwendinê dest pê bike û pêşveçûna te dê li vir xuya bibe.',
+  focusStat:'Dema xwendinê ya îro di awayê baldariyê de bi biçûkî nîşan bide', todayShort:'Îro {t}',
+  dataSec:'Daneyên te', dataNote:'Hemû dane tenê li ser vê amûrê dimînin, bê hesab.', exportBtn:'Daneyan kopî bike', exported:'Dane hatin kopîkirin. Wan di pelekî nivîsê de tomar bike.',
+  exportManual:'Nivîsa di qutiyê de kopî bike û di pelekî de tomar bike.', importBtn:'Ji pelê barkirin', importPaste:'An jî daneyan li vir bi cih bike û «Barkirin» bitikîne',
+  importGo:'Barkirin', imported:'Hat barkirin.', importBad:'Dane ne derbasdar in. Piştrast bike ku ji TARKIZO ne.', clearBtn:'Hemû daneyên herêmî jê bibe',
+  clearConfirm:'Ji bo jêbirina her tiştî dîsa bitikîne', wd:'Yekşem,Duşem,Sêşem,Çarşem,Pêncşem,În,Şemî', wdS:'Y,D,S,Ç,P,Î,Ş', allSettings:'Hemû mîheng', close:'Bigire', resize:'Firehiya panelê biguherîne'
+}};
+const LANGS = [['ar','العربية'], ['ku','Kurmancî'], ['en','English'], ['de','Deutsch']];
+let lang = 'ar';
+function t(k, v){ let s = (T[lang] && T[lang][k]) || T.ar[k] || k; if (v) for (const p in v) s = s.split('{'+p+'}').join(v[p]); return s; }
+
+/* ---------- Storage (all wrapped: storage may be blocked) ---------- */
+const KEY = 'tarkizo.v1.';
+function load(k, d){ try { const v = localStorage.getItem(KEY+k); return v ? JSON.parse(v) : d; } catch(e){ return d; } }
+function save(k, v){ try { if (v === null) localStorage.removeItem(KEY+k); else localStorage.setItem(KEY+k, JSON.stringify(v)); } catch(e){} }
+lang = (() => { const l = load('lang', null); return T[l] ? l : 'ar'; })();
+
+/* ---------- Config ---------- */
+const PRESETS = [
+  {id:'pomodoro', s:25*60, b:5*60},
+  {id:'medium',   s:50*60, b:10*60},
+  {id:'long',     s:90*60, b:15*60},
+  {id:'short',    s:15*60, b:3*60}
+];
+const DEFAULTS = {preset:'pomodoro', studySec:1500, breakSec:300, cycles:4, cdSec:5, cdMode:'each', endWithBreak:false, sound:true,
+                  autoFocus:true, autoHide:true, autoFs:false, showProgress:true,
+                  goal:60, showStreak:true, focusStat:false, showTaskFocus:true};
+const prefersCalm = (() => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch(e){ return false; } })();
+const LOOK_DEFAULT = {mode:'auto', theme:'tarkizo', style:'digital', dscale:100, thick:6, barDir:'h',
+                      bg:null, digits:null, ring:null, motion:'anim', dim:30, calm:prefersCalm};
+let cfg = Object.assign({}, DEFAULTS, load('config', {}));
+cfg.look = Object.assign({}, LOOK_DEFAULT, cfg.look || {});
+const SND_DEFAULT = {alertVol:70, studyStart:'none', studyEnd:'bell', breakStart:'soft', breakEnd:'piano', cdTick:false,
+                     warnOn:true, warnLead:4, warnSound:'nature', warnVol:60,
+                     ambVol:60, levels:{}, during:'both', ambAuto:true, mixes:[]};
+cfg.snd = Object.assign({}, SND_DEFAULT, cfg.snd || {});
+cfg.snd.levels = Object.assign({}, cfg.snd.levels);
+if (!Array.isArray(cfg.snd.mixes)) cfg.snd.mixes = [];
+['studyStart','studyEnd','breakStart','breakEnd','warnSound'].forEach(k => { if (cfg.snd[k] === 'bowl') cfg.snd[k] = 'glass'; });
+delete cfg.snd.levels.music;
+let saved = load('saved', []);
+if (!Array.isArray(saved)) saved = [];
+
+const $ = id => document.getElementById(id);
+const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
+const int = (el, d) => { const n = parseInt(el.value, 10); return isFinite(n) ? n : d; };
+
+/* ---------- Formatting ---------- */
+function fmtClock(ms){
+  const total = Math.max(0, Math.ceil(ms/1000));
+  const h = Math.floor(total/3600), m = Math.floor(total%3600/60), s = total%60;
+  const p = n => String(n).padStart(2,'0');
+  return h ? h+':'+p(m)+':'+p(s) : p(m)+':'+p(s);
+}
+function fmtHuman(sec){
+  sec = Math.round(sec);
+  const h = Math.floor(sec/3600), m = Math.floor(sec%3600/60), s = sec%60, out = [];
+  if (h) out.push(h+' '+t('h'));
+  if (m) out.push(m+' '+t('m'));
+  if (s && !h) out.push(s+' '+t('s'));
+  return out.length ? out.join(' ') : t('zero');
+}
+function fmtShort(sec){ const m = Math.floor(sec/60), s = sec%60; return s ? m+':'+String(s).padStart(2,'0') : String(m); }
+
+/* ---------- Setup UI ---------- */
+function applyText(){
+  document.documentElement.lang = lang === 'ku' ? 'kmr' : lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.querySelectorAll('[data-t]').forEach(el => { el.textContent = t(el.dataset.t); });
+  $('saveName').placeholder = t('savePh');
+  $('cycles').setAttribute('aria-label', t('cycles'));
+}
+
+function renderPresets(){
+  const box = $('presets'), list = PRESETS.concat([{id:'custom'}]);
+  if (box.children.length !== list.length) box.innerHTML = '';
+  list.forEach((p, i) => {
+    let b = box.children[i];
+    if (!b) {
+      b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip';
+      b.innerHTML = '<span></span>' + (p.s ? '<span class="n"></span>' : '');
+      b.onclick = () => {
+        cfg.preset = p.id;
+        if (p.s) { cfg.studySec = p.s; cfg.breakSec = p.b; }
+        commit();
+      };
+      box.appendChild(b);
+    }
+    b.setAttribute('aria-pressed', String(cfg.preset === p.id));
+    b.firstChild.textContent = t('p_'+p.id);
+    if (p.s) b.lastChild.textContent = (p.s/60)+' / '+(p.b/60);
+  });
+}
+// Chips are updated in place: rebuilding them while a click is in progress (e.g. after a field's change event) would swallow the click.
+function renderChips(boxId, values, current, label, onPick){
+  const box = $(boxId);
+  if (box.children.length !== values.length) {
+    box.innerHTML = '';
+    values.forEach(() => { const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; box.appendChild(b); });
+  }
+  values.forEach((v, i) => {
+    const b = box.children[i];
+    b.setAttribute('aria-pressed', String(current === v));
+    b.textContent = label(v);
+    b.onclick = () => onPick(v);
+  });
+}
+function renderSaved(){
+  const ul = $('savedList'); ul.innerHTML = '';
+  $('savedNone').hidden = saved.length > 0;
+  saved.forEach((s, i) => {
+    const li = document.createElement('li');
+    const a = document.createElement('button'); a.type = 'button';
+    a.textContent = s.name + '  ·  ';
+    const n = document.createElement('span'); n.className = 'mono'; n.textContent = fmtShort(s.studySec)+'/'+fmtShort(s.breakSec)+' ×'+s.cycles;
+    a.appendChild(n);
+    a.onclick = () => { cfg.studySec = s.studySec; cfg.breakSec = s.breakSec; cfg.cycles = s.cycles; cfg.preset = matchPreset(); commit(); };
+    const x = document.createElement('button'); x.type = 'button'; x.className = 'x'; x.textContent = '×';
+    x.setAttribute('aria-label', t('del', {name:s.name}));
+    x.onclick = () => { saved.splice(i, 1); save('saved', saved); renderSaved(); };
+    li.append(a, x); ul.appendChild(li);
+  });
+}
+function matchPreset(){
+  const p = PRESETS.find(p => p.s === cfg.studySec && p.b === cfg.breakSec);
+  return p ? p.id : 'custom';
+}
+function renderSetup(){
+  renderPresets();
+  $('sMin').value = Math.floor(cfg.studySec/60); $('sSec').value = cfg.studySec%60;
+  $('bMin').value = Math.floor(cfg.breakSec/60); $('bSec').value = cfg.breakSec%60;
+  renderChips('cycleChips', [1,2,4,6,8], cfg.cycles, v => String(v), v => { cfg.cycles = v; commit(); });
+  $('cycles').value = cfg.cycles;
+  renderChips('cdChips', [0,3,5,10], cfg.cdSec, v => v ? t('secN',{n:v}) : t('off'), v => { cfg.cdSec = v; commit(); });
+  $('cdEach').checked = cfg.cdMode === 'each'; $('cdFirst').checked = cfg.cdMode === 'first';
+  $('cdModeBox').hidden = cfg.cdSec === 0;
+  $('endStudy').checked = !cfg.endWithBreak; $('endBreak').checked = cfg.endWithBreak;
+  $('sound').checked = cfg.sound;
+  ['autoFocus','autoHide','autoFs','showProgress'].forEach(k => { $(k).checked = !!cfg[k]; });
+  $('autoFs').disabled = !canFs; $('autoFsHint').hidden = canFs;
+  const studyTotal = cfg.cycles * cfg.studySec;
+  const breaks = (cfg.endWithBreak ? cfg.cycles : cfg.cycles - 1) * cfg.breakSec;
+  $('sumStudy').innerHTML = '';
+  $('sumStudy').append(t('sumStudy', {n:cfg.cycles, s:fmtHuman(cfg.studySec), t:''}));
+  const b = document.createElement('b'); b.textContent = fmtHuman(studyTotal); $('sumStudy').appendChild(b);
+  $('sumTotal').textContent = t('sumTotal', {t:fmtHuman(studyTotal + breaks)});
+  $('startBtn').disabled = cfg.studySec < 1;
+}
+function renderHero(){
+  renderChips('hPresets', ['pomodoro','medium','long','short','custom'], cfg.preset, id => t('p_'+id), id => {
+    if (id === 'custom') { setDrawer(true); setTab('timer'); return; }
+    const p = PRESETS.find(x => x.id === id); cfg.preset = id; cfg.studySec = p.s; cfg.breakSec = p.b; commit();
+  });
+  if (!run || run.status === 'done') {
+    $('miniPhase').textContent = t('focus');
+    setHeroClock(fmtClock(cfg.studySec*1000));
+    paintFace($('hero'), 0);
+  }
+}
+function commit(){ save('config', cfg); renderSetup(); renderHero(); renderTaskLine(); }
+
+function readTimes(){
+  cfg.studySec = clamp(int($('sMin'),0),0,600)*60 + clamp(int($('sSec'),0),0,59);
+  cfg.breakSec = clamp(int($('bMin'),0),0,600)*60 + clamp(int($('bSec'),0),0,59);
+  cfg.preset = matchPreset();
+  commit();
+}
+['sMin','sSec','bMin','bSec'].forEach(id => $(id).addEventListener('change', readTimes));
+$('cycles').addEventListener('change', () => { cfg.cycles = clamp(int($('cycles'), 4), 1, 99); commit(); });
+$('cdEach').addEventListener('change', () => { cfg.cdMode = 'each'; commit(); });
+$('cdFirst').addEventListener('change', () => { cfg.cdMode = 'first'; commit(); });
+$('endStudy').addEventListener('change', () => { cfg.endWithBreak = false; commit(); });
+$('endBreak').addEventListener('change', () => { cfg.endWithBreak = true; commit(); });
+$('sound').addEventListener('change', e => { cfg.sound = e.target.checked; commit(); });
+['autoFocus','autoHide','autoFs','showProgress'].forEach(k => $(k).addEventListener('change', e => { cfg[k] = e.target.checked; commit(); }));
+$('saveForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('saveName').value.trim();
+  if (!name) { $('saveName').focus(); return; }
+  const item = {name, studySec:cfg.studySec, breakSec:cfg.breakSec, cycles:cfg.cycles};
+  const i = saved.findIndex(s => s.name === name);
+  if (i >= 0) saved[i] = item; else saved.push(item);
+  save('saved', saved); $('saveName').value = ''; renderSaved();
+});
+
+/* Audio is unlocked from a click (browsers block sound before the first interaction). The engine itself is defined further down. */
+function unlockAudio(){ Sound.unlock(); }
+function alertFor(ev){
+  if (!run || !run.sound) return;
+  const id = cfg.snd[ev];
+  if (id && id !== 'none') { Sound.alert(id, cfg.snd.alertVol); lastAlertAt = Date.now(); }
+}
+
+/* ---------- Timer engine: every phase is defined by its real end time ---------- */
+let run = load('run', null);
+let lastChime = '', lastAlertAt = 0, lastStartKey = '', lastWarnKey = '', ambOn = false;
+
+function nextStep(){
+  if (run.status === 'study') {
+    if (run.cycle < run.total) return run.breakSec > 0 ? {phase:'break', cycle:run.cycle} : {phase:'study', cycle:run.cycle+1};
+    return (run.endWithBreak && run.breakSec > 0) ? {phase:'break', cycle:run.cycle} : null;
+  }
+  if (run.status === 'break') return run.cycle < run.total ? {phase:'study', cycle:run.cycle+1} : null;
+  return null;
+}
+function enterPhase(next, at, first){
+  if (run.cdSec > 0 && (run.cdMode === 'each' || first)) {
+    run.status = 'countdown'; run.pending = next; run.cdEndAt = at + run.cdSec*1000; run.paused = false;
+  } else beginPhase(next, at);
+}
+function beginPhase(next, at){
+  run.status = next.phase; run.cycle = next.cycle; run.pending = null;
+  run.full = (next.phase === 'study' ? run.studySec : run.breakSec) * 1000;
+  run.dur = run.full; run.endAt = at + run.dur; run.paused = false; run.remain = 0;
+  run.lastPhase = next.phase;
+  if (Date.now() - at < 1500) goFlash = Date.now();
+  // Start sound: only when it begins right now, and not on top of an end sound that just played.
+  const sk = run.startedAt+':s:'+next.phase+':'+next.cycle;
+  if (Date.now() - at < 1500 && Date.now() - lastAlertAt > 400 && sk !== lastStartKey) {
+    lastStartKey = sk; alertFor(next.phase === 'study' ? 'studyStart' : 'breakStart');
+  }
+}
+function remaining(now){ return run.paused ? run.remain : run.endAt - now; }
+function finishPhase(at, natural){
+  const was = run.status;
+  if (was === 'study') {
+    const ms = natural ? run.dur : Math.max(0, run.dur - remaining(at));
+    run.studiedMs += ms;
+    if (natural) run.studyDone++;
+    logStudy(ms, natural, at);
+  }
+  const next = nextStep();
+  const key = run.startedAt+':'+was+':'+run.cycle;
+  // End sound once per phase, and only if it ended just now (not while catching up after sleep).
+  if (natural && Date.now() - at < 4000 && key !== lastChime) { lastChime = key; alertFor(was === 'study' ? 'studyEnd' : 'breakEnd'); }
+  if (next) enterPhase(next, at, false); else finishRun(at);
+}
+function finishRun(at){
+  logRun(at, !run.ended);
+  run.status = 'done'; run.finishedAt = at; run.paused = false;
+  releaseWake();
+  if (cfg.snd.ambAuto) ambOn = false;
+}
+function advance(now){
+  for (let guard = 0; guard < 500 && run; guard++) {
+    if (run.status === 'countdown') { if (now >= run.cdEndAt) { beginPhase(run.pending, run.cdEndAt); continue; } break; }
+    if ((run.status === 'study' || run.status === 'break') && !run.paused && now >= run.endAt) { finishPhase(run.endAt, true); continue; }
+    break;
+  }
+}
+
+/* ---------- Actions ---------- */
+function startRun(){
+  if (run && run.status !== 'done') return;          // never start two sessions
+  unlockAudio();
+  const now = Date.now();
+  run = {status:'idle', cycle:1, total:cfg.cycles, studySec:cfg.studySec, breakSec:cfg.breakSec,
+         endWithBreak:cfg.endWithBreak, cdSec:cfg.cdSec, cdMode:cfg.cdMode, sound:cfg.sound,
+         studiedMs:0, studyDone:0, startedAt:now, finishedAt:0, paused:false, remain:0, seen:now,
+         task:(curTaskObj() ? curTask : null)};
+  statsOpen = false;
+  if (preview) { preview = null; applyLook(); }       // an unapplied preview is dropped when a session starts
+  setDrawer(false, false);
+  focusView = cfg.autoFocus;
+  if (cfg.snd.ambAuto && hasMix()) ambOn = true;
+  if (cfg.autoFs && !isFs()) enterFs();               // must run inside the click
+  enterPhase({phase:'study', cycle:1}, now, true);
+  persist(); keepAwake(); show();
+}
+function togglePause(){
+  if (!run || (run.status !== 'study' && run.status !== 'break')) return;
+  const now = Date.now();
+  if (run.paused) { run.endAt = now + run.remain; run.paused = false; keepAwake(); }
+  else { run.remain = Math.max(0, run.endAt - now); run.paused = true; releaseWake(); }
+  persist(); render(); pokeUi();
+}
+function skipPhase(){
+  if (!run) return;
+  const now = Date.now();
+  if (run.status === 'countdown') beginPhase(run.pending, now);
+  else if (run.status === 'study' || run.status === 'break') finishPhase(now, false);
+  persist(); show();
+}
+function adjust(deltaMs){
+  if (!run || (run.status !== 'study' && run.status !== 'break')) return;
+  const now = Date.now();
+  if (run.paused) run.remain = Math.max(0, run.remain + deltaMs); else run.endAt += deltaMs;
+  run.dur = Math.max(run.dur + deltaMs, remaining(now), 1000);
+  if (remaining(now) <= 0) { run.paused = false; finishPhase(now, true); }
+  persist(); show();
+}
+function resetPhase(){
+  if (!run || (run.status !== 'study' && run.status !== 'break')) return;
+  run.dur = run.full;
+  if (run.paused) run.remain = run.full; else run.endAt = Date.now() + run.full;
+  persist(); render();
+}
+let endArmed = 0;
+function endRun(){
+  if (!run) return;
+  const now = Date.now();
+  if (now - endArmed > 3000) { endArmed = now; $('end').textContent = t('endConfirm'); $('end').classList.add('warn'); pokeUi(); return; }
+  endArmed = 0;
+  if (run.status === 'study') { const ms = Math.max(0, run.dur - remaining(now)); run.studiedMs += ms; logStudy(ms, false, now); }
+  run.ended = true; finishRun(now); persist(); show();
+}
+function moreCycles(n){
+  if (!run || run.status !== 'done') return;
+  unlockAudio();
+  const now = Date.now();
+  const next = (run.lastPhase === 'study' && run.breakSec > 0) ? {phase:'break', cycle:run.cycle} : {phase:'study', cycle:run.cycle+1};
+  run.total = Math.max(run.total, run.cycle) + n; run.ended = false; run.finishedAt = 0;
+  if (next.phase === 'break') { run.status = 'study'; } // so nextStep after this break leads to study
+  focusView = cfg.autoFocus;
+  if (cfg.snd.ambAuto && hasMix()) ambOn = true;
+  enterPhase(next, now, true);
+  persist(); keepAwake(); show();
+}
+function backToSetup(){ run = null; persist(); releaseWake(); show(); }
+
+/* ---------- Persistence of the running session ---------- */
+function persist(){ if (run) run.seen = Date.now(); save('run', run && run.status !== 'done' ? run : null); }
+
+/* ---------- Screen wake lock (optional, ignored where refused) ---------- */
+let wake = null;
+async function keepAwake(){ try { if (!wake && 'wakeLock' in navigator && document.visibilityState === 'visible') { wake = await navigator.wakeLock.request('screen'); wake.addEventListener('release', () => { wake = null; }); } } catch(e){ wake = null; } }
+function releaseWake(){ try { if (wake) wake.release(); } catch(e){} wake = null; }
+
+/* ---------- Rendering ---------- */
+let goFlash = 0, lastCd = '';
+function show(){
+  const s = run ? run.status : 'idle';
+  const active = s === 'study' || s === 'break' || s === 'countdown';
+  const inFocus = active && focusView;
+  $('run').hidden = !inFocus;
+  $('home').hidden = inFocus || s === 'done' || statsOpen;
+  $('hIdle').hidden = active; $('hLive').hidden = !active;
+  $('done').hidden = s !== 'done' || statsOpen;
+  $('statsView').hidden = !statsOpen || inFocus;
+  $('openStats').setAttribute('aria-pressed', String(statsOpen && !inFocus));
+  $('restore').hidden = true;
+  document.body.classList.toggle('focus-on', inFocus);
+  if (!inFocus) { setPanel(false, true); clearTimeout(idleTimer); setUi(true); }
+  if (!run) { document.body.removeAttribute('data-phase'); document.title = 'TARKIZO'; renderSetup(); renderHero(); }
+  if (s === 'done') renderDone();
+  render();
+  if (inFocus) { syncPanel(); updateFs(); pokeUi(); }
+}
+function render(){
+  if (!run) { $('cd').hidden = true; syncAmb(); return; }
+  const now = Date.now();
+  advance(now);
+  syncAmb();
+  const s = run.status;
+  if (s === 'done') { if ($('done').hidden) show(); $('cd').hidden = true; return; }
+
+  if (s === 'countdown') {
+    document.body.dataset.phase = run.pending.phase;
+    $('cd').hidden = !focusView;                        // in the full interface the mini bar shows it instead
+    $('cdLabel').textContent = t(run.pending.phase === 'study' ? 'cdStudy' : 'cdBreak');
+    const n = String(Math.max(1, Math.ceil((run.cdEndAt - now)/1000)));
+    setCd(n, false);
+    $('miniPhase').textContent = $('cdLabel').textContent; setHeroClock(n); paintFace($('hero'), 0); $('miniPause').hidden = true;
+      document.title = n+' · TARKIZO';
+    return;
+  }
+  // brief "ابدأ!" right after a countdown ends
+  if (focusView && goFlash && now - goFlash < 700) { $('cd').hidden = false; setCd(t('go'), true); }
+  else { $('cd').hidden = true; lastCd = ''; }
+
+  document.body.dataset.phase = s;
+  const rem = remaining(now);
+  const txt = fmtClock(rem);
+  if ($('clock').textContent !== txt) { $('clock').textContent = txt; $('clock').classList.toggle('long', txt.length > 5); }
+  paintFace($('center'), clamp(1 - rem/run.dur, 0, 1));
+  $('phase').textContent = run.paused ? t('paused') : t(s === 'study' ? 'focus' : 'rest');
+  $('run').classList.toggle('is-paused', run.paused);
+  $('pause').textContent = run.paused ? t('resume') : t('pause');
+
+  const isExtraBreak = s === 'break' && run.cycle >= run.total;
+  const studiesLeft = run.total - run.cycle;
+  $('meta').textContent = isExtraBreak ? t('extraBreak')
+    : t('cycleOf', {c:run.cycle, n:run.total}) + ' · ' + (studiesLeft > 0 ? t('left', {n:studiesLeft}) : t('lastOne'));
+  if (cfg.focusStat) $('meta').textContent += ' · ' + t('todayShort', {t:fmtHuman((todayMs() + (s === 'study' ? Math.max(0, run.dur - rem) : 0))/1000)});
+  const rtk = run.task ? tasks.find(x => x.id === run.task) : null;
+  $('fTask').hidden = !(cfg.showTaskFocus && rtk);
+  if (rtk && $('fTask').textContent !== '✎ ' + rtk.name) $('fTask').textContent = '✎ ' + rtk.name;
+  $('msg').hidden = s !== 'break'; $('msg').textContent = t('restMsg');
+
+  // Warning shortly before the break ends: one sound per break, plus a visual cue.
+  const lead = cfg.snd.warnLead*1000;
+  const warnNow = s === 'break' && cfg.snd.warnOn && !run.paused && rem > 0 && rem <= lead;
+  $('cue').hidden = !warnNow;
+  if (warnNow) $('cue').textContent = t('warnCue', {n:Math.ceil(rem/1000)});
+  $('run').classList.toggle('warning', warnNow);
+  if (warnNow) {
+    const k = run.startedAt+':w:'+run.cycle;
+    if (k !== lastWarnKey && rem > lead - 1500) { lastWarnKey = k; if (run.sound) Sound.alert(cfg.snd.warnSound, cfg.snd.warnVol); }
+  }
+
+  const nxt = nextStep();
+  $('skip').textContent = s === 'break' ? (nxt ? t('skipToStudy') : t('skipFinish')) : (nxt ? (nxt.phase === 'break' ? t('skipToBreak') : t('skipToStudy')) : t('skipFinish'));
+  if (endArmed && now - endArmed > 3000) { endArmed = 0; $('end').textContent = t('end'); $('end').classList.remove('warn'); }
+
+  renderDots();
+  $('miniPhase').textContent = $('phase').textContent; setHeroClock(txt); paintFace($('hero'), clamp(1 - rem/run.dur, 0, 1));
+  $('miniPause').hidden = false; $('miniPause').textContent = $('pause').textContent;
+  document.title = txt + ' · ' + t(s === 'study' ? 'focus' : 'rest');
+}
+function setHeroClock(txt){ const c = $('miniClock'); if (c.textContent !== txt) { c.textContent = txt; c.classList.toggle('long', txt.length > 5); } }
+function setCd(text, word){
+  if (lastCd === text) return;
+  lastCd = text;
+  if (!word && cfg.snd.cdTick && run && run.sound) Sound.alert('tick', cfg.snd.alertVol*.8);
+  const el = $('cdNum');
+  el.textContent = text; el.classList.toggle('word', word);
+  $('cdSkip').hidden = word; $('cdLabel').hidden = word;
+  el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+}
+let dotsKey = '';
+function renderDots(){
+  const key = run.total+':'+run.cycle+':'+run.status;
+  if (key === dotsKey) return; dotsKey = key;
+  const box = $('dots'); box.innerHTML = '';
+  if (run.total > 24) return;
+  for (let i = 1; i <= run.total; i++) {
+    const d = document.createElement('span');
+    d.className = 'dot' + (i < run.cycle || (i === run.cycle && run.status === 'break') ? ' is-done' : '') + (i === run.cycle && run.status === 'study' ? ' is-now' : '');
+    box.appendChild(d);
+  }
+}
+function renderDone(){
+  $('doneTitle').textContent = run.ended ? t('doneEarly') : t('doneTitle');
+  const dtk = run.task ? tasks.find(x => x.id === run.task) : null;
+  $('doneTask').hidden = !dtk;
+  if (dtk) $('doneTask').textContent = t('doneTask', {name:dtk.name, d:dtk.done, n:dtk.target});
+  $('stStudied').textContent = fmtHuman(run.studiedMs/1000);
+  $('stSessions').textContent = run.studyDone + ' / ' + run.total;
+  $('stTotal').textContent = fmtHuman(((run.finishedAt || Date.now()) - run.startedAt)/1000);
+  document.title = t('doneTitle');
+  document.body.removeAttribute('data-phase');
+}
+
+/* ---------- Wiring ---------- */
+$('startBtn').onclick = startRun;
+$('pause').onclick = togglePause;
+$('skip').onclick = skipPhase;
+$('plus').onclick = () => adjust(60000);
+$('minus').onclick = () => adjust(-60000);
+$('resetPhase').onclick = resetPhase;
+$('end').onclick = endRun;
+$('cdSkip').onclick = skipPhase;
+$('more1').onclick = () => moreCycles(1);
+$('more2').onclick = () => moreCycles(2);
+$('back').onclick = backToSetup;
+
+/* ---------- Full focus mode ---------- */
+let focusView = true, idleTimer = 0;
+const ICON = {
+  fsEnter:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>',
+  fsExit:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/></svg>',
+  opts:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>',
+  exit:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9h17M9 9v10.5"/></svg>'
+};
+function label(id, k){ $(id).setAttribute('aria-label', t(k)); $(id).title = t(k); }
+$('optBtn').innerHTML = ICON.opts; label('optBtn', 'options');
+$('exitFocus').innerHTML = ICON.exit; label('exitFocus', 'exitFocus');
+
+// Controls fade out after 3 s without input; any movement, touch or key brings them back.
+function setUi(on){ $('run').classList.toggle('ui-hidden', !on); }
+function pokeUi(){
+  setUi(true); clearTimeout(idleTimer);
+  if (cfg.autoHide && focusView && run && (run.status === 'study' || run.status === 'break') && !run.paused && $('fpanel').hidden && !endArmed)
+    idleTimer = setTimeout(() => setUi(false), 3000);
+}
+['pointermove','pointerdown','touchstart','wheel'].forEach(ev => $('run').addEventListener(ev, pokeUi, {passive:true}));
+$('run').addEventListener('focusin', pokeUi);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !$('fpanel').hidden) setPanel(false);
+  else if (e.key === 'Escape' && $('drawer').classList.contains('open')) setDrawer(false);
+  if (!$('run').hidden) pokeUi();
+});
+
+// Small options panel inside focus mode
+function setPanel(open, quiet){
+  $('fpanel').hidden = !open; $('optBtn').setAttribute('aria-expanded', String(open));
+  if (open) syncPanel();
+  if (!quiet) pokeUi();
+}
+function syncPanel(){
+  $('fAutoHide').checked = cfg.autoHide; $('fProgress').checked = cfg.showProgress;
+  $('fSound').checked = run ? run.sound : cfg.sound;
+  $('fAmbVol').value = cfg.snd.ambVol; $('fAmbVolOut').textContent = cfg.snd.ambVol+'%';
+  $('fAmb').textContent = t(ambOn ? 'ambStop' : 'ambPlay');
+  $('run').classList.toggle('no-progress', !cfg.showProgress);
+}
+$('optBtn').onclick = () => setPanel($('fpanel').hidden);
+$('run').addEventListener('pointerdown', e => {
+  if (!$('fpanel').hidden && !$('fpanel').contains(e.target) && !$('optBtn').contains(e.target)) setPanel(false);
+});
+$('fAutoHide').addEventListener('change', e => { cfg.autoHide = e.target.checked; commit(); });
+$('fProgress').addEventListener('change', e => { cfg.showProgress = e.target.checked; commit(); syncPanel(); });
+$('fSound').addEventListener('change', e => {
+  cfg.sound = e.target.checked; commit();
+  if (run) { run.sound = e.target.checked; persist(); }
+  if (e.target.checked) unlockAudio();
+});
+
+// Switching between focus mode and the full interface (the timer keeps running)
+$('exitFocus').onclick = () => { focusView = false; show(); };
+$('miniFocus').onclick = () => { focusView = true; show(); };
+$('miniPause').onclick = togglePause;
+
+// Real fullscreen (optional: phones and some browsers refuse it)
+const root = document.documentElement;
+const canFs = !!(root.requestFullscreen || root.webkitRequestFullscreen);
+function isFs(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+function enterFs(){
+  if (!canFs) { fsNote(false); return; }
+  let p;
+  try { p = root.requestFullscreen ? root.requestFullscreen() : root.webkitRequestFullscreen(); }
+  catch(e){ fsNote(true); return; }
+  if (p && p.catch) p.catch(() => fsNote(true));
+}
+function exitFs(){
+  try { const p = document.exitFullscreen ? document.exitFullscreen() : (document.webkitExitFullscreen && document.webkitExitFullscreen()); if (p && p.catch) p.catch(() => {}); } catch(e){}
+}
+function updateFs(){
+  const on = isFs();
+  $('fsBtn').hidden = !canFs;
+  $('fsBtn').innerHTML = on ? ICON.fsExit : ICON.fsEnter;
+  label('fsBtn', on ? 'fsExit' : 'fsEnter');
+  if (on) $('fsNote').hidden = true;
+}
+let fsNoteTimer = 0;
+function fsNote(retry){
+  $('fsNoteText').textContent = t(canFs ? 'fsBlocked' : 'fsNone');
+  $('fsRetry').hidden = !(canFs && retry);
+  $('fsNote').hidden = false;
+  clearTimeout(fsNoteTimer); fsNoteTimer = setTimeout(() => { $('fsNote').hidden = true; }, 8000);
+}
+$('fsBtn').onclick = () => { if (isFs()) exitFs(); else enterFs(); };
+$('fsRetry').onclick = () => { $('fsNote').hidden = true; enterFs(); };
+document.addEventListener('fullscreenchange', updateFs);
+document.addEventListener('webkitfullscreenchange', updateFs);
+updateFs();
+
+/* ---------- Appearance: themes, clock faces, colours, ambient scene ---------- */
+// Palette order: bg, surface, ink, muted, line, study, break
+const THEMES = [
+  {id:'roses',   font:'cute',  scene:'roses', skin:'rose', style:'ring', mix:'roses', featured:true,
+   light:['#FFEFF3','#FFF8FA','#5A2636','#9C6676','#F5D3DD','#D9466F','#9A63C9'], dark:['#26141B','#331B25','#FFE4EC','#D39FAF','#4A2A37','#FF8DB0','#C9A0F0']},
+  {id:'code',    font:'code',  scene:'glyphs', skin:'code', style:'digital', mix:'coding', featured:true,
+   light:['#F3F4F6','#FFFFFF','#2B2F36','#687080','#DDE1E6','#56688C','#86779F'], dark:['#14171C','#1B1F26','#D8DDE4','#838B97','#2A2F38','#8EA2C6','#B3A4CC']},
+  {id:'tarkizo', font:'mono',  scene:'none',
+   light:['#E7EDEB','#F4F7F6','#1A2526','#596866','#CCD7D4','#2C675F','#A26A2C'], dark:['#101716','#172120','#E2EBE8','#90A19E','#283533','#72B5AA','#DDA463']},
+  {id:'pastel',  font:'sans',  scene:'bokeh',
+   light:['#EEF0F7','#F8F9FD','#2A2D3E','#6A6E8C','#DADDEC','#5E66C2','#C27A90'], dark:['#1A1B26','#232433','#E6E7F2','#9A9DB8','#33354A','#A3A9F0','#EDB1C2']},
+  {id:'forest',  font:'serif', scene:'fireflies',
+   light:['#E4ECE1','#F2F6F0','#1E2A1C','#56664F','#CBD7C6','#3B6E3C','#97692A'], dark:['#101A12','#18241A','#DFEADB','#8FA38B','#2A3A2B','#86C083','#D9AE62']},
+  {id:'rain',    font:'mono',  scene:'rain',
+   light:['#DDE3EA','#EDF1F5','#1F2933','#586676','#C6D0DA','#3A6690','#94683A'], dark:['#11171F','#19212B','#DCE4EC','#8B9AAA','#2A3542','#84AEDA','#D8A86C']},
+  {id:'sea',     font:'sans',  scene:'waves',
+   light:['#E1EFF3','#F1F8FA','#12303A','#4A6F7B','#C3DEE5','#1B7189','#B97A3E'], dark:['#0C1C23','#13272F','#D8ECF1','#85A8B3','#21404A','#6CC3DA','#E8B07A']},
+  {id:'fire',    font:'serif', scene:'embers',
+   light:['#F1E6DA','#FAF3EB','#34231A','#77604F','#E2CFBD','#AE4E1C','#5F7333'], dark:['#1B130E','#261A13','#F3E2D3','#B8977F','#3A2A1F','#F08A4B','#B6C277']},
+  {id:'night',   font:'mono',  scene:'stars', density:.55,
+   light:['#E6E6F2','#F3F3FA','#1E1E35','#5F5F7C','#D0D0E3','#4C43A0','#9A5279'], dark:['#0E1026','#161936','#E3E3F6','#9294BE','#262A52','#9D95F0','#E09AC2']},
+  {id:'minimal', font:'sans',  scene:'none',
+   light:['#F3F3F1','#FFFFFF','#1C1C1A','#686863','#E1E1DC','#1C1C1A','#77664F'], dark:['#141414','#1C1C1C','#EDEDEA','#9A9A95','#2C2C2B','#EDEDEA','#C8B596']},
+  {id:'beige',   font:'serif', scene:'dust',
+   light:['#EFE6D8','#F8F2E8','#2F271D','#74665A','#DFD2BF','#85562A','#5A7556'], dark:['#1D1914','#26211A','#EFE6D8','#AE9F8A','#3A3328','#D9A86A','#9DBB94']},
+  {id:'space',   font:'mono',  scene:'stars', density:1.4,
+   light:['#E3E6F0','#F0F2F8','#151A2E','#59607D','#CDD2E3','#3855D2','#9450C2'], dark:['#070A18','#0F1427','#E1E6FA','#8A93BA','#1D2440','#7E98FF','#C58BF2']},
+  {id:'library', font:'serif', scene:'dust',
+   light:['#E9E1D4','#F5EFE5','#2B1F17','#6A5848','#D9CBB7','#6B2E2A','#3D5842'], dark:['#19130F','#221A15','#EDE2D2','#A8937D','#372B22','#CF7B6E','#8FB394']}
+];
+const FONTS = {cute:'"Baloo Bhaijaan 2","Readex Pro",system-ui,sans-serif', mono:'"DM Mono",ui-monospace,Menlo,Consolas,monospace', serif:'"Fraunces",Georgia,"Times New Roman",serif',
+               code:'"JetBrains Mono","Readex Pro",ui-monospace,Menlo,Consolas,monospace', sans:'"Readex Pro","Segoe UI",system-ui,sans-serif'};
+const STYLES = ['digital','ring','progress','bar','minimal','huge'];
+const ARC = 2 * Math.PI * 82;
+
+function hexRgb(h){ const n = parseInt(String(h).slice(1), 16); return [n>>16&255, n>>8&255, n&255]; }
+function rgbHex(c){ return '#' + c.map(v => Math.round(clamp(v,0,255)).toString(16).padStart(2,'0')).join(''); }
+function mix(a, b, k){ const x = hexRgb(a), y = hexRgb(b); return rgbHex(x.map((v,i) => v + (y[i]-v)*k)); }
+function rgba(h, a){ const c = hexRgb(h); return 'rgba('+c[0]+','+c[1]+','+c[2]+','+a.toFixed(3)+')'; }
+function lum(h){ const c = hexRgb(h).map(v => { v /= 255; return v <= .03928 ? v/12.92 : Math.pow((v+.055)/1.055, 2.4); }); return .2126*c[0] + .7152*c[1] + .0722*c[2]; }
+function onColor(h){ const L = lum(h); return (1.05/(L+.05)) >= ((L+.05)/.06) ? '#FFFFFF' : '#141A1A'; }
+function resolveDark(mode){
+  if (mode === 'dark') return true;
+  if (mode === 'light') return false;
+  const a = root.getAttribute('data-theme');
+  if (a === 'dark') return true;
+  if (a === 'light') return false;
+  try { return matchMedia('(prefers-color-scheme: dark)').matches; } catch(e){ return false; }
+}
+
+let preview = null;                                   // a theme being previewed, not yet applied
+function curLook(){ return preview || cfg.look; }
+function palette(L){
+  const th = THEMES.find(x => x.id === L.theme) || THEMES[0];
+  const dark = resolveDark(L.mode), a = dark ? th.dark : th.light;
+  const p = {bg:a[0], surface:a[1], ink:a[2], muted:a[3], line:a[4], study:a[5], brk:a[6], dark, th};
+  if (L.bg) {                                          // custom background: text colours follow its brightness
+    const d = lum(L.bg) < .2, b = d ? th.dark : th.light;
+    Object.assign(p, {bg:L.bg, ink:b[2], muted:b[3], study:b[5], brk:b[6], dark:d,
+      surface:mix(L.bg, '#FFFFFF', d ? .06 : .55)});
+    p.line = mix(L.bg, p.ink, .14);
+  }
+  return p;
+}
+function applyLook(){
+  const L = curLook(), p = palette(L), s = root.style;
+  const set = (k, v) => s.setProperty(k, v);
+  set('--bg', p.bg); set('--surface', p.surface); set('--ink', p.ink); set('--muted', p.muted); set('--line', p.line);
+  set('--study', p.study); set('--break', p.brk); set('--on-study', onColor(p.study)); set('--on-break', onColor(p.brk));
+  if (L.digits) set('--digits-c', L.digits); else s.removeProperty('--digits-c');
+  if (L.ring) set('--ring-c', L.ring); else s.removeProperty('--ring-c');
+  const mt = document.querySelector('meta[name="theme-color"]'); if (mt) mt.setAttribute('content', p.bg);   // browser bar follows the theme
+  set('--dscale', String(L.dscale/100)); set('--thick', L.thick+'px'); set('--f-clock', FONTS[p.th.font]);
+  s.colorScheme = p.dark ? 'dark' : 'light';
+  root.classList.toggle('calm', !!L.calm);
+  if (p.th.skin) document.body.dataset.skin = p.th.skin; else delete document.body.dataset.skin;
+  ['center','pvBox','hero'].forEach(id => { $(id).dataset.style = L.style; $(id).dataset.bardir = L.barDir; });
+  Scene.set(p.th.scene, p, L.motion === 'anim' && !L.calm, L.dim/100, p.th.density || 1);
+  paintFace($('pvBox'), .26);
+  if (!run || run.status === 'done') paintFace($('hero'), 0);
+}
+
+function paintFace(el, frac){
+  const st = el.dataset.style;
+  const arc = el.querySelector('.arc');
+  if (arc) arc.style.strokeDashoffset = String(st === 'progress' ? ARC*(1-frac) : ARC*frac);
+  const bl = el.querySelector('.bloom');
+  if (bl) { const th = (st === 'progress' ? frac : 1 - frac) * 2 * Math.PI;
+    bl.setAttribute('transform', 'translate('+(100 + 82*Math.cos(th)).toFixed(2)+' '+(100 + 82*Math.sin(th)).toFixed(2)+') rotate('+(th*180/Math.PI + 90).toFixed(1)+')'); }
+  const f = el.querySelector('.fill'); if (f) f.style.transform = 'scaleX('+frac.toFixed(4)+')';
+  const v = el.querySelector('.vfill'); if (v) v.style.transform = 'scaleY('+frac.toFixed(4)+')';
+}
+document.querySelectorAll('.ticks').forEach(g => {
+  let s = '';
+  for (let i = 0; i < 60; i++) {
+    const a = i/60*2*Math.PI, major = i % 5 === 0, r1 = major ? 93 : 95.5;
+    s += '<line'+(major ? ' class="major"' : '')+' x1="'+(100+r1*Math.cos(a)).toFixed(2)+'" y1="'+(100+r1*Math.sin(a)).toFixed(2)+
+         '" x2="'+(100+99*Math.cos(a)).toFixed(2)+'" y2="'+(100+99*Math.sin(a)).toFixed(2)+'"/>';
+  }
+  g.innerHTML = s;
+});
+
+// Ambient scene: a light canvas, ~30 fps, paused automatically when the tab is hidden.
+const Scene = (function(){
+  const cv = $('scene'), ctx = cv.getContext ? cv.getContext('2d') : null;
+  const GLYPH = '01{}[]()<>=+;:/*#$&'.split('');
+  let kind = 'none', p = null, anim = false, dim = .3, dens = 1, W = 0, H = 0, parts = [], raf = 0, last = 0, tt = 0, rt = 0;
+  const R = (a, b) => a + Math.random()*(b-a);
+  function make(init){
+    switch (kind) {
+      case 'rain':      return {x:R(-50,W+50), y:init?R(0,H):R(-80,-10), l:R(10,24), v:R(520,820), a:R(.08,.22)};
+      case 'stars':     return {x:R(0,W), y:R(0,H), r:R(.4,1.5), a:R(.25,.9), ph:R(0,6.3), sp:R(.4,1.6)};
+      case 'embers':    return {x:R(W*.1,W*.9), y:init?R(H*.3,H):H+R(0,40), r:R(.8,2.4), v:R(18,48), dx:R(-14,14), ph:R(0,6.3)};
+      case 'petals':    return {x:R(0,W), y:init?R(0,H):R(-40,-10), r:R(4,8), v:R(16,34), rot:R(0,6.3), vr:R(-.8,.8), ph:R(0,6.3), a:R(.16,.34)};
+      case 'fireflies': return {x:R(0,W), y:R(H*.25,H), r:R(1.2,2.4), ph:R(0,6.3), vx:R(-12,12), vy:R(-8,8)};
+      case 'bokeh':     return {x:R(0,W), y:R(0,H), r:R(40,120), vx:R(-6,6), vy:R(-4,4), a:R(.04,.09), c:Math.random() < .5};
+      case 'dust':      return {x:R(0,W), y:R(0,H), r:R(.6,1.8), vx:R(-5,5), vy:R(-7,-1), a:R(.15,.4), ph:R(0,6.3)};
+    }
+    return {};
+  }
+  /* --- Code scene: programming words scattered quietly around the edges, very faint --- */
+  const WORDS = ['Python','C++','Java','JavaScript','TypeScript','C#','Go','Rust','Kotlin','Swift','Dart','PHP','SQL','HTML','CSS','Ruby',
+    'OOP','API','JSON','Git','Linux','Docker','React','Flutter','Node.js','REST','HTTP','Regex','Algorithm','Debug',
+    'class','return','async','await','const','let','if','else','for','while','void','int','null','true','lambda','def',
+    '{ }','</>','=>','( )','[ ]','&&','!=','++','#include','main()','O(n)','01'];
+  let glyphs = [];
+  function glyphSeed(){
+    glyphs = [];
+    const area = clamp(W*H/(1280*800), .35, 2), n = Math.round(46*area), boxes = [];
+    for (let tries = 0; glyphs.length < n && tries < n*40; tries++) {
+      const w = WORDS[Math.floor(Math.random()*WORDS.length)], fs = Math.round(R(12, 22)*(W < 600 ? .85 : 1));
+      const x = R(16, W - 16), y = R(28, H - 16);
+      // keep the middle, where the clock sits, clear
+      if (Math.abs(x - W/2) < W*.26 && Math.abs(y - H*.47) < H*.3) continue;
+      const bw = w.length*fs*.62 + 24, bh = fs + 18;
+      if (x + bw > W) continue;
+      if (boxes.some(b => x < b[0] + b[2] && x + bw > b[0] && y - bh < b[1] && y > b[1] - b[3])) continue;
+      boxes.push([x, y, bw, bh]);
+      glyphs.push({w, x, y, fs, a:R(.07, .17), ph:R(0, 6.3), sp:R(.08, .2)});
+    }
+  }
+  function glyphDraw(){
+    try { ctx.direction = 'ltr'; } catch(e){}
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    for (const g of glyphs) {
+      const k = anim ? .75 + .25*Math.sin(tt*g.sp + g.ph) : 1;      // a very slow breathing, nothing moves
+      ctx.font = g.fs + 'px "JetBrains Mono",ui-monospace,Menlo,Consolas,monospace';
+      ctx.fillStyle = rgba(p.ink, g.a*k*(p.dark ? .9 : 1));
+      ctx.fillText(g.w, g.x, g.y);
+    }
+  }
+
+  /* --- Rose garden scene: layered roses with leaves, petals drifting and flipping, sparkles and small hearts --- */
+  let roses = [], hearts = [], heartT = 0;
+  const ROSE_COL = [['#F27A9B','#C0335F','#FFD3DF'], ['#F7A8BE','#D2557E','#FFE8EF'], ['#E85A82','#9E1E47','#FFB8CB']];
+  function roseSprite(size, col){
+    const c = document.createElement('canvas'), S = Math.ceil(size*1.8); c.width = c.height = S;
+    const x = c.getContext('2d'); if (!x) return c;
+    x.translate(S/2, S/2);
+    const [base, deep, light] = col;
+    [[2.25, .82], [.8, .74], [3.95, .62], [5.4, .5]].forEach(([ang, k]) => {
+      const len = size*k;
+      x.save(); x.rotate(ang);
+      const g = x.createLinearGradient(size*.2, 0, len, 0); g.addColorStop(0, '#3E7A45'); g.addColorStop(1, '#86B97E');
+      x.fillStyle = g; x.beginPath(); x.moveTo(size*.2, 0);
+      x.quadraticCurveTo(len*.62, -len*.3, len, 0); x.quadraticCurveTo(len*.62, len*.3, size*.2, 0); x.fill();
+      x.strokeStyle = 'rgba(255,255,255,.28)'; x.lineWidth = 1; x.beginPath(); x.moveTo(size*.24, 0); x.lineTo(len*.93, 0); x.stroke();
+      x.restore();
+    });
+    const layers = 5;
+    for (let L = layers; L >= 1; L--) {
+      const n = 4 + L, r = size*.5*L/layers;
+      for (let i = 0; i < n; i++) {
+        x.save(); x.rotate(i/n*Math.PI*2 + L*.7);
+        const pw = r*.95, ph = r*.8, cy = -r*.42;
+        const g = x.createRadialGradient(0, cy - ph*.55, 1, 0, cy*.6, ph*1.15);
+        g.addColorStop(0, light); g.addColorStop(.5, base); g.addColorStop(1, deep);
+        x.fillStyle = g; x.beginPath(); x.moveTo(0, 0);
+        x.bezierCurveTo(pw*.9, cy*.2, pw*.78, cy - ph*.92, 0, cy - ph*.74);
+        x.bezierCurveTo(-pw*.78, cy - ph*.92, -pw*.9, cy*.2, 0, 0); x.fill();
+        x.globalAlpha = .3; x.strokeStyle = deep; x.lineWidth = 1; x.stroke(); x.globalAlpha = 1;
+        x.restore();
+      }
+    }
+    x.strokeStyle = deep; x.lineWidth = Math.max(1.2, size*.014); x.globalAlpha = .5;
+    for (let k = 0; k < 3; k++) { x.beginPath(); x.arc(0, 0, size*(.05 + .045*k), k*1.3, k*1.3 + 3.8); x.stroke(); }
+    x.globalAlpha = 1;
+    return c;
+  }
+  function roseSeed(){
+    const sz = clamp(Math.min(W, H)*.2, 64, 190);
+    const spots = [[.05,.98,1.25,0],[.17,1.03,.95,1],[.01,.8,.72,2],[.96,.03,1.1,1],[1.01,.21,.68,0],[.93,1.01,.78,2]];
+    roses = spots.map(([fx, fy, k, v]) => { const sp = roseSprite(sz*k, ROSE_COL[v]); return {x:W*fx, y:H*fy, sp, ph:R(0, 6.3)}; });
+    parts = [];
+    const area = clamp(W*H/(1280*800), .4, 2);
+    for (let i = 0; i < Math.round(20*area); i++) parts.push(petal(true));
+    for (let i = 0; i < Math.round(22*area); i++) parts.push({star:true, x:R(0, W), y:R(0, H), r:R(1.5, 3.6), ph:R(0, 6.3), sp:R(.8, 2)});
+    hearts = []; heartT = 1;
+  }
+  function petal(init){ return {x:R(-20, W), y:init ? R(0, H) : R(-60, -10), s:R(6, 11), vx:R(6, 22), vy:R(16, 32), rot:R(0, 6.3), vr:R(-1, 1), fl:R(0, 6.3), vf:R(1, 2.6), ph:R(0, 6.3), c:Math.floor(R(0, 3))}; }
+  function roseStep(dt){
+    for (const q of parts) if (!q.star) {
+      q.y += q.vy*dt; q.x += (q.vx + Math.sin(tt*.9 + q.ph)*14)*dt; q.rot += q.vr*dt; q.fl += q.vf*dt;
+      if (q.y > H + 20 || q.x > W + 30) Object.assign(q, petal(false));
+    }
+    heartT -= dt;
+    if (heartT <= 0 && hearts.length < 6) { hearts.push({x:R(W*.1, W*.9), y:H + 10, s:R(8, 14), v:R(14, 26), ph:R(0, 6.3), life:0}); heartT = R(1.8, 3.6); }
+    hearts.forEach(h => { h.y -= h.v*dt; h.life += dt; });
+    hearts = hearts.filter(h => h.y > -20 && h.life < 14);
+  }
+  function heartPath(s){ ctx.beginPath(); ctx.moveTo(0, s*.3); ctx.bezierCurveTo(0, 0, -s*.5, 0, -s*.5, s*.3); ctx.bezierCurveTo(-s*.5, s*.6, 0, s*.78, 0, s);
+    ctx.bezierCurveTo(0, s*.78, s*.5, s*.6, s*.5, s*.3); ctx.bezierCurveTo(s*.5, 0, 0, 0, 0, s*.3); }
+  function roseDraw(){
+    const rg = ctx.createRadialGradient(W*.5, H*.45, 0, W*.5, H*.45, Math.max(W, H)*.7);
+    rg.addColorStop(0, rgba('#FFFFFF', p.dark ? .05 : .55)); rg.addColorStop(1, rgba('#FFFFFF', 0));
+    ctx.fillStyle = rg; ctx.fillRect(0, 0, W, H);
+    for (const r of roses) { const S = r.sp.width; ctx.save(); ctx.translate(r.x, r.y); ctx.rotate(Math.sin(tt*.5 + r.ph)*.035); ctx.drawImage(r.sp, -S/2, -S/2); ctx.restore(); }
+    const sparkle = p.dark ? '#FFFFFF' : mix(p.study, '#FFFFFF', .25);
+    for (const q of parts) {
+      if (q.star) {
+        const a = anim ? Math.max(0, Math.sin(tt*q.sp + q.ph)) : .6, r = q.r*(.6 + .4*a);
+        ctx.save(); ctx.translate(q.x, q.y); ctx.fillStyle = rgba(sparkle, .75*a);
+        ctx.beginPath(); ctx.moveTo(0, -r*2); ctx.quadraticCurveTo(0, 0, r*2, 0); ctx.quadraticCurveTo(0, 0, 0, r*2); ctx.quadraticCurveTo(0, 0, -r*2, 0); ctx.quadraticCurveTo(0, 0, 0, -r*2); ctx.fill();
+        ctx.restore(); continue;
+      }
+      const [base, deep] = ROSE_COL[q.c];
+      ctx.save(); ctx.translate(q.x, q.y); ctx.rotate(q.rot); ctx.scale(Math.cos(q.fl), 1);
+      const g = ctx.createLinearGradient(0, -q.s, 0, q.s); g.addColorStop(0, base); g.addColorStop(1, deep);
+      ctx.fillStyle = g; ctx.globalAlpha = .82;
+      ctx.beginPath(); ctx.moveTo(0, q.s); ctx.bezierCurveTo(q.s*.9, q.s*.3, q.s*.7, -q.s*.9, q.s*.12, -q.s*.75);
+      ctx.lineTo(0, -q.s*.55); ctx.lineTo(-q.s*.12, -q.s*.75); ctx.bezierCurveTo(-q.s*.7, -q.s*.9, -q.s*.9, q.s*.3, 0, q.s); ctx.fill();
+      ctx.restore();
+    }
+    for (const h of hearts) {
+      const a = Math.min(1, h.life/1.5) * Math.min(1, (h.y + 20)/(H*.4));
+      ctx.save(); ctx.translate(h.x + Math.sin(tt*1.4 + h.ph)*10, h.y); ctx.fillStyle = rgba(p.study, .38*a); heartPath(h.s); ctx.fill(); ctx.restore();
+    }
+  }
+
+  function seed(){
+    parts = [];
+    if (kind === 'glyphs') { glyphSeed(); return; }
+    if (kind === 'roses') { roseSeed(); return; }
+    const area = clamp(W*H/(1280*800), .35, 2.2);
+    if (kind === 'code') {
+      for (let x = 11; x < W; x += 22) if (Math.random() < .3) {
+        const c = {x, y:R(-H,H), v:R(30,90), len:Math.floor(R(5,14)), g:[]};
+        for (let j = 0; j < c.len; j++) c.g.push(GLYPH[Math.floor(Math.random()*GLYPH.length)]);
+        parts.push(c);
+      }
+      return;
+    }
+    const n = ({rain:110, stars:160, embers:50, petals:24, fireflies:36, bokeh:18, dust:40})[kind] || 0;
+    for (let i = 0; i < Math.round(n*area*dens); i++) parts.push(make(true));
+  }
+  function wrap(q){ const r = q.r || 0; if (q.x < -r*2) q.x = W+r; else if (q.x > W+r*2) q.x = -r; if (q.y < -r*2) q.y = H+r; else if (q.y > H+r*2) q.y = -r; }
+  function step(dt){
+    tt += dt;
+    if (kind === 'glyphs') return;
+    if (kind === 'roses') { roseStep(dt); return; }
+    for (const q of parts) switch (kind) {
+      case 'rain':   q.y += q.v*dt; q.x -= q.v*dt*.12; if (q.y > H+30) Object.assign(q, make(false)); break;
+      case 'embers': q.y -= q.v*dt; q.x += Math.sin(tt*1.3+q.ph)*q.dx*dt; if (q.y < H*.15) Object.assign(q, make(false)); break;
+      case 'petals': q.y += q.v*dt; q.x += Math.sin(tt*.8+q.ph)*18*dt; q.rot += q.vr*dt; if (q.y > H+20) Object.assign(q, make(false)); break;
+      case 'fireflies': q.x += q.vx*dt; q.y += q.vy*dt; if (Math.random() < .01) { q.vx = R(-12,12); q.vy = R(-8,8); } wrap(q); break;
+      case 'bokeh': case 'dust': q.x += q.vx*dt; q.y += q.vy*dt; wrap(q); break;
+      case 'code':   q.y += q.v*dt; if (q.y - q.len*18 > H) q.y = R(-200,0);
+                     if (Math.random() < .02) q.g[Math.floor(Math.random()*q.len)] = GLYPH[Math.floor(Math.random()*GLYPH.length)]; break;
+    }
+  }
+  function draw(){
+    if (!ctx || !p || !W) return;
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, p.bg); g.addColorStop(1, mix(p.bg, p.study, p.dark ? .10 : .08));
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    const ink = p.ink, acc = p.study, warm = p.brk, pulse = q => anim ? .55 + .45*Math.sin(tt*(q.sp||1.2) + q.ph) : 1;
+    switch (kind) {
+      case 'glyphs': glyphDraw(); break;
+      case 'roses': roseDraw(); break;
+      case 'rain':
+        ctx.lineWidth = 1;
+        for (const q of parts) { ctx.strokeStyle = rgba(ink, q.a); ctx.beginPath(); ctx.moveTo(q.x, q.y); ctx.lineTo(q.x + q.l*.12, q.y - q.l); ctx.stroke(); }
+        break;
+      case 'stars':
+        for (const q of parts) { ctx.fillStyle = rgba(ink, q.a*pulse(q)*(p.dark ? 1 : .45)); ctx.beginPath(); ctx.arc(q.x, q.y, q.r, 0, 6.283); ctx.fill(); }
+        break;
+      case 'embers': {
+        const rg = ctx.createRadialGradient(W/2, H*1.08, 0, W/2, H*1.08, Math.max(W, H)*.7);
+        rg.addColorStop(0, rgba(acc, p.dark ? .22 : .14)); rg.addColorStop(1, rgba(acc, 0));
+        ctx.fillStyle = rg; ctx.fillRect(0, 0, W, H);
+        for (const q of parts) { ctx.fillStyle = rgba(acc, clamp(q.y/H, 0, 1)*.8); ctx.beginPath(); ctx.arc(q.x, q.y, q.r, 0, 6.283); ctx.fill(); }
+        break; }
+      case 'petals':
+        for (const q of parts) { ctx.save(); ctx.translate(q.x, q.y); ctx.rotate(q.rot); ctx.fillStyle = rgba(acc, q.a);
+          ctx.beginPath(); ctx.ellipse(0, 0, q.r, q.r*.55, 0, 0, 6.283); ctx.fill(); ctx.restore(); }
+        break;
+      case 'fireflies':
+        for (const q of parts) { const k = pulse(q);
+          ctx.fillStyle = rgba(warm, .14*k); ctx.beginPath(); ctx.arc(q.x, q.y, q.r*4, 0, 6.283); ctx.fill();
+          ctx.fillStyle = rgba(warm, .75*k); ctx.beginPath(); ctx.arc(q.x, q.y, q.r, 0, 6.283); ctx.fill(); }
+        break;
+      case 'bokeh':
+        for (const q of parts) { ctx.fillStyle = rgba(q.c ? acc : warm, q.a); ctx.beginPath(); ctx.arc(q.x, q.y, q.r, 0, 6.283); ctx.fill(); }
+        break;
+      case 'dust': {
+        const rg = ctx.createRadialGradient(W*.8, -H*.1, 0, W*.8, -H*.1, Math.max(W, H)*.9);
+        rg.addColorStop(0, rgba(warm, p.dark ? .14 : .10)); rg.addColorStop(1, rgba(warm, 0));
+        ctx.fillStyle = rg; ctx.fillRect(0, 0, W, H);
+        for (const q of parts) { ctx.fillStyle = rgba(p.dark ? '#FFE8C2' : warm, q.a*pulse(q)); ctx.beginPath(); ctx.arc(q.x, q.y, q.r, 0, 6.283); ctx.fill(); }
+        break; }
+      case 'waves':
+        for (let i = 0; i < 3; i++) {
+          ctx.fillStyle = rgba(acc, .06 + .035*i); ctx.beginPath(); ctx.moveTo(0, H);
+          for (let x = 0; x <= W + 20; x += 20) ctx.lineTo(x, H*(.7 + .08*i) + Math.sin(x*.006 + tt*(.45 + .2*i) + i*1.7)*(12 + i*6));
+          ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
+        }
+        break;
+      case 'code':
+        ctx.font = '14px "JetBrains Mono",monospace'; ctx.textAlign = 'center';
+        for (const c of parts) for (let j = 0; j < c.len; j++) {
+          ctx.fillStyle = rgba(acc, (1 - j/c.len)*(p.dark ? .28 : .2)); ctx.fillText(c.g[j], c.x, c.y - j*18);
+        }
+        break;
+    }
+    if (dim > 0) { ctx.fillStyle = rgba(p.bg, dim); ctx.fillRect(0, 0, W, H); }
+  }
+  function loop(ts){
+    raf = 0; if (!anim) return;
+    raf = requestAnimationFrame(loop);
+    if (ts - last < 33) return;
+    const dt = Math.min(.1, (ts - last)/1000) || 0; last = ts;
+    step(dt); draw();
+  }
+  function resize(){
+    const dpr = Math.min(1.5, window.devicePixelRatio || 1);
+    W = window.innerWidth || 0; H = window.innerHeight || 0;
+    cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr);
+    if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    seed(); draw();
+  }
+  window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(resize, 150); });
+  function set(k, pal, a, d, de){
+    const reseed = k !== kind || de !== dens || !W;
+    kind = k; p = pal; dim = d; dens = de;
+    anim = a && k !== 'none' && !!ctx;
+    if (!W) resize(); else if (reseed) seed();
+    draw();
+    if (anim && !raf) { last = performance.now(); raf = requestAnimationFrame(loop); }
+    if (!anim && raf) { cancelAnimationFrame(raf); raf = 0; }
+  }
+  return {set};
+})();
+
+// Appearance controls
+function setLook(k, v){ cfg.look[k] = v; if (preview) preview[k] = v; commit(); applyLook(); renderLook(); }
+function renderThemes(){
+  const box = $('themes'), L = curLook(), dark = resolveDark(L.mode);
+  THEMES.forEach((th, i) => {
+    const a = dark ? th.dark : th.light;
+    let b = box.children[i];
+    if (!b) {
+      b = document.createElement('button');
+      b.type = 'button'; b.className = 'th';
+      b.innerHTML = '<span class="th-sw"><b>25:00</b><i></i></span><span class="th-name"></span>' + (th.featured ? '<span class="th-badge"></span>' : '');
+      b.firstChild.firstChild.style.fontFamily = FONTS[th.font];
+      b.onclick = () => { preview = th.id === cfg.look.theme ? null : Object.assign({}, cfg.look, {theme:th.id}, th.style ? {style:th.style} : {}); applyLook(); renderLook(); };
+      box.appendChild(b);
+    }
+    b.setAttribute('aria-pressed', String(L.theme === th.id));
+    const sw = b.firstChild;
+    sw.style.background = 'linear-gradient(180deg,'+a[0]+','+mix(a[0], a[5], .16)+')';
+    sw.style.color = a[2]; sw.lastChild.style.background = a[5];
+    b.querySelector('.th-name').textContent = t('th_'+th.id);
+    if (th.featured) b.querySelector('.th-badge').textContent = t('featured');
+  });
+  const cur = THEMES.find(x => x.id === L.theme);
+  $('themeMix').hidden = !(cur && cur.mix);
+  if (cur && cur.mix) $('themeMix').textContent = t('themeMix', {name:t('mx_'+cur.mix)});
+}
+function colorRow(id, val, fallback){ $(id).value = val || fallback; $(id+'Reset').disabled = !val; }
+function renderLook(){
+  const L = curLook(), p = palette(L);
+  renderChips('modeChips', ['auto','light','dark'], L.mode, v => t('m_'+v), v => setLook('mode', v));
+  renderThemes();
+  $('pvBar').hidden = !preview;
+  if (preview) $('pvText').textContent = t('pvText', {name:t('th_'+preview.theme)});
+  renderChips('styleChips', STYLES, L.style, v => t('st_'+v), v => setLook('style', v));
+  $('dscale').value = L.dscale; $('dscaleOut').textContent = L.dscale+'%';
+  $('thick').value = L.thick; $('thickOut').textContent = String(L.thick);
+  $('thickField').hidden = !['ring','progress','bar'].includes(L.style);
+  $('barDirBox').hidden = L.style !== 'bar';
+  renderChips('barDirBox', ['h','v'], L.barDir, v => t(v === 'h' ? 'barH' : 'barV'), v => setLook('barDir', v));
+  colorRow('cBg', L.bg, p.bg); colorRow('cDigits', L.digits, p.ink); colorRow('cRing', L.ring, p.study);
+  renderChips('motionChips', ['anim','static'], L.motion, v => t('mo_'+v), v => setLook('motion', v));
+  $('dim').value = L.dim; $('dimOut').textContent = L.dim+'%';
+  $('calm').checked = !!L.calm;
+}
+$('themeMix').onclick = () => {
+  const cur = THEMES.find(x => x.id === curLook().theme);
+  if (!cur || !cur.mix) return;
+  cfg.snd.levels = Object.assign({}, MIXP.find(m => m.id === cur.mix).levels); ambOn = true; unlockAudio(); commitSnd();
+};
+$('pvApply').onclick = () => { if (preview) cfg.look = preview; preview = null; commit(); applyLook(); renderLook(); };
+$('pvCancel').onclick = () => { preview = null; applyLook(); renderLook(); };
+$('dscale').addEventListener('input', e => setLook('dscale', clamp(int(e.target, 100), 70, 125)));
+$('thick').addEventListener('input', e => setLook('thick', clamp(int(e.target, 6), 2, 18)));
+$('dim').addEventListener('input', e => setLook('dim', clamp(int(e.target, 30), 0, 80)));
+$('calm').addEventListener('change', e => setLook('calm', e.target.checked));
+[['cBg','bg'],['cDigits','digits'],['cRing','ring']].forEach(([id, k]) => {
+  $(id).addEventListener('input', e => setLook(k, e.target.value));
+  $(id+'Reset').onclick = () => setLook(k, null);
+});
+$('lookReset').onclick = () => { preview = null; cfg.look = Object.assign({}, LOOK_DEFAULT); commit(); applyLook(); renderLook(); };
+function onSystemTheme(){ applyLook(); if (!$('tabLook').hidden) renderLook(); }
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', onSystemTheme); } catch(e){}
+try { new MutationObserver(onSystemTheme).observe(root, {attributes:true, attributeFilter:['data-theme']}); } catch(e){}
+
+/* ---------- Sound engine: alerts and ambient soundscapes, all synthesized with the Web Audio API ---------- */
+const ALERTS = ['none','bell','piano','glass','digital','nature','soft','tick'];
+const EVENTS = ['studyStart','studyEnd','breakStart','breakEnd'];
+// Real recordings (Moodist library, CC0 / Pixabay License), loudness-normalised, loaded only when switched on.
+const FILES = {rain:'rain.mp3', thunder:'thunder.mp3', forest:'birds.mp3', trees:'trees.mp3', waves:'waves.mp3', stream:'river.mp3',
+               fire:'fire.mp3', wind:'wind.mp3', night:'crickets.mp3', cafe:'cafe.mp3', library:'library.mp3',
+               keyboard:'keyboard.mp3', typewriter:'typewriter.mp3', cat:'cat.mp3', chimes:'chimes.mp3'};
+const AMB_GROUPS = [
+  ['g_nature', ['rain','thunder','forest','trees','waves','stream','fire','wind','night']],
+  ['g_places', ['cafe','library']],
+  ['g_things', ['keyboard','typewriter','cat','chimes']],
+  ['g_noise',  ['white','brown']]
+];
+const AMB_IDS = AMB_GROUPS.flatMap(g => g[1]);
+const MIXP = [
+  {id:'roses',   levels:{forest:40, chimes:30, stream:20}},
+  {id:'coding',  levels:{keyboard:35, rain:40, cafe:20}},
+  {id:'rainy',   levels:{rain:55, fire:40}},
+  {id:'library', levels:{library:45, rain:25}},
+  {id:'sea',     levels:{waves:65, wind:15}},
+  {id:'night',   levels:{night:50, wind:15}},
+  {id:'brown',   levels:{brown:55}}
+];
+// Loudness trim per source. Recordings are normalised in the files; synthesized ones are trimmed here.
+const BASE = {library:.8, trees:.85, cafe:.9, keyboard:.9, white:.7, brown:1.1,
+              rain:1, thunder:1, forest:1, waves:1, stream:1, fire:1, wind:1, night:1, typewriter:1, cat:1, chimes:1};
+// Gains for the synthesized fallbacks, used only if a recording cannot be loaded.
+const SYN = {rain:.85, thunder:.85, forest:1.15, waves:1.35, stream:1.25, fire:.8, wind:1, night:2.4};
+
+const Sound = (function(){
+  let ctx = null, alertBus = null, ambBus = null, busTarget = -1, killT = 0, lastOn = false;
+  const noise = {}, srcs = {};
+  const R = (a, b) => a + Math.random()*(b-a);
+  function ac(){
+    if (!ctx) {
+      const C = window.AudioContext || window.webkitAudioContext;
+      if (!C) return null;
+      try { ctx = new C(); } catch(e){ return null; }
+      // A gentle limiter on the output so a loud mix plus an alert never distorts.
+      const lim = ctx.createDynamicsCompressor();
+      lim.threshold.value = -6; lim.knee.value = 6; lim.ratio.value = 12; lim.attack.value = .003; lim.release.value = .25;
+      lim.connect(ctx.destination);
+      alertBus = ctx.createGain(); alertBus.connect(lim);
+      ambBus = ctx.createGain(); ambBus.gain.value = 0; ambBus.connect(lim);
+    }
+    if (ctx.state === 'suspended' && ctx.resume) { try { const p = ctx.resume(); if (p && p.catch) p.catch(() => {}); } catch(e){} }
+    return ctx;
+  }
+  const G = v => { const g = ctx.createGain(); g.gain.value = v; return g; };
+  const F = (type, f, q) => { const x = ctx.createBiquadFilter(); x.type = type; x.frequency.value = f; if (q != null) x.Q.value = q; return x; };
+  function chain(){ for (let i = 0; i < arguments.length - 1; i++) arguments[i].connect(arguments[i+1]); return arguments[arguments.length-1]; }
+  function nb(type){                                    // 6 s of noise with a crossfaded, click-free loop point
+    if (noise[type]) return noise[type];
+    const sr = ctx.sampleRate, len = sr*6, X = 2048, b = ctx.createBuffer(1, len, sr), d = b.getChannelData(0);
+    let last = 0, b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+    for (let i = 0; i < len; i++) {
+      const w = Math.random()*2 - 1;
+      if (type === 'white') d[i] = w;
+      else if (type === 'brown') { last = (last + .02*w)/1.02; d[i] = last*3.5; }
+      else { b0 = .99886*b0 + w*.0555179; b1 = .99332*b1 + w*.0750759; b2 = .969*b2 + w*.153852; b3 = .8665*b3 + w*.3104856;
+             b4 = .55*b4 + w*.5329522; b5 = -.7616*b5 - w*.016898; d[i] = (b0+b1+b2+b3+b4+b5+b6 + w*.5362)*.11; b6 = w*.115926; }
+    }
+    for (let i = 0; i < X; i++) { const k = i/X; d[i] = d[i]*k + d[len-X+i]*(1-k); }
+    return (noise[type] = {b, end:(len - X)/sr});
+  }
+  function src(type, T){
+    const n = nb(type), s = ctx.createBufferSource();
+    s.buffer = n.b; s.loop = true; s.loopStart = 0; s.loopEnd = n.end;
+    s.start(ctx.currentTime, R(0, n.end - .1));
+    return T(s);
+  }
+  function lfo(T, f, depth, param){ const o = T(ctx.createOscillator()); o.frequency.value = f; const g = G(depth); o.connect(g); g.connect(param); o.start(); }
+  function env(g, t, a, peak, dec){ g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(peak, t+a); g.gain.exponentialRampToValueAtTime(.0001, t+a+dec); }
+  function osc(type, f, dest, t, stop){ const o = ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, t); o.connect(dest); o.start(t); o.stop(stop); return o; }
+  function partials(out, t, f, list, dec){
+    list.forEach(([r, a], i) => { const g = G(0); g.connect(out); env(g, t, .004, a, dec/(1 + i*.6)); osc('sine', f*r, g, t, t + dec + .1); });
+  }
+
+  const AL = {
+    bell(o, t){ partials(o, t, 659.25, [[1,.5],[2.76,.22],[5.4,.1],[8.93,.04]], 2.6); },
+    piano(o, t){ [523.25, 659.25, 783.99].forEach((f, i) => { const s = t + i*.16;
+      const g = G(0); g.connect(o); env(g, s, .008, .42, 1.3); osc('sine', f, g, s, s + 1.5);
+      const h = G(0); h.connect(o); env(h, s, .008, .09, .6); osc('triangle', f*2, h, s, s + .8); }); },
+    glass(o, t){ partials(o, t, 1318.5, [[1,.32],[2.32,.17],[4.25,.09],[6.63,.04]], 3.2); partials(o, t + .42, 1975.5, [[1,.16],[2.32,.08]], 2.4); },
+    digital(o, t){ const lp = F('lowpass', 2600); lp.connect(o);
+      [0, .15].forEach(d => { const g = G(0); g.connect(lp); g.gain.setValueAtTime(.0001, t+d); g.gain.linearRampToValueAtTime(.38, t+d+.005);
+        g.gain.setValueAtTime(.38, t+d+.07); g.gain.linearRampToValueAtTime(.0001, t+d+.08); osc('square', 1046.5, g, t+d, t+d+.1); }); },
+    nature(o, t){ [0, .22, .5].forEach(d => { const s = t + d, f = R(650, 900), g = G(0); g.connect(o); env(g, s, .004, .45, .16);
+      osc('sine', f, g, s, s + .25).frequency.exponentialRampToValueAtTime(f*2.3, s + .05); }); },
+    soft(o, t){ const g = G(0); g.connect(o); env(g, t, .06, .38, 1.1); osc('sine', 587.33, g, t, t + 1.3);
+      const h = G(0); h.connect(o); env(h, t, .06, .08, .8); osc('sine', 880, h, t, t + 1); },
+    tick(o, t){ const g = G(0); g.connect(o); env(g, t, .002, .35, .06); osc('sine', 1800, g, t, t + .1).frequency.exponentialRampToValueAtTime(1100, t + .03); }
+  };
+
+  const AMB = {
+    rain(o, T){ chain(src('pink', T), F('highpass', 400), F('lowpass', 8000), G(.9), o); chain(src('white', T), F('bandpass', 3200, .7), G(.12), o); },
+    thunder(o, T, every){
+      AMB.rain(o, T);
+      every(() => { const t = ctx.currentTime, s = ctx.createBufferSource(), g = G(0); s.buffer = nb('brown').b;
+        chain(s, F('lowpass', R(120, 190)), g, o);
+        g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(R(1.2, 2), t + R(.3, .9)); g.gain.exponentialRampToValueAtTime(.0001, t + R(5, 8));
+        s.start(t, R(0, 4)); s.stop(t + 9); }, 16000, 38000);
+    },
+    forest(o, T, every){
+      const g = G(.45); chain(src('brown', T), F('lowpass', 500), g, o); lfo(T, .08, .2, g.gain);
+      every(() => { const t = ctx.currentTime, n = Math.floor(R(2, 6)), f = R(2300, 3800);
+        const p = ctx.createStereoPanner ? ctx.createStereoPanner() : G(1); if (p.pan) p.pan.value = R(-.7, .7); p.connect(o);
+        for (let i = 0; i < n; i++) { const s = t + i*R(.09, .16), e = G(0); e.connect(p); env(e, s, .01, R(.05, .1), .09);
+          osc('sine', f*R(.95, 1.05), e, s, s + .15).frequency.exponentialRampToValueAtTime(f*R(1.15, 1.5), s + .07); } }, 1200, 4500);
+    },
+    waves(o, T){ const lp = F('lowpass', 700), g = G(.55); chain(src('pink', T), lp, g, o); lfo(T, .11, 450, lp.frequency); lfo(T, .11, .4, g.gain);
+      chain(src('brown', T), F('lowpass', 400), G(.3), o); },
+    stream(o, T){ const g = G(.3); chain(src('white', T), F('bandpass', 1500, .6), g, o); lfo(T, 3.3, .07, g.gain); lfo(T, 5.1, .05, g.gain);
+      chain(src('white', T), F('highpass', 4000), G(.05), o); chain(src('brown', T), F('lowpass', 300), G(.25), o); },
+    fire(o, T, every){
+      const g = G(.7); chain(src('brown', T), F('lowpass', 300), g, o); lfo(T, .3, .15, g.gain);
+      every(() => { const t = ctx.currentTime + R(0, .05), s = ctx.createBufferSource(), e = G(0), pop = Math.random() < .08; s.buffer = nb('white').b;
+        chain(s, F('highpass', R(1200, 3500)), e, o); env(e, t, .001, pop ? R(.5, .8) : R(.06, .3), R(.01, pop ? .06 : .03));
+        s.start(t, R(0, 5)); s.stop(t + .12); }, 60, 380);
+    },
+    wind(o, T){ const bp = F('bandpass', 600, 1.2), g = G(.55); chain(src('white', T), bp, g, o); lfo(T, .07, 350, bp.frequency); lfo(T, .05, .3, g.gain);
+      chain(src('brown', T), F('lowpass', 200), G(.3), o); },
+    night(o, T, every){
+      chain(src('brown', T), F('lowpass', 400), G(.18), o);
+      [[4400, 850], [4950, 1100]].forEach(([f, ms]) => every(() => { const t = ctx.currentTime;
+        for (let i = 0; i < 3; i++) { const s = t + i*.04, e = G(0); e.connect(o);
+          e.gain.setValueAtTime(.0001, s); e.gain.linearRampToValueAtTime(.022, s + .005); e.gain.linearRampToValueAtTime(.0001, s + .022); osc('sine', f, e, s, s + .03); } }, ms*.85, ms*1.15));
+    },
+    white(o, T){ chain(src('white', T), G(.22), o); },
+    brown(o, T){ chain(src('brown', T), G(.5), o); }
+  };
+
+  // Recordings: fetched once, decoded, and given a crossfaded loop point so they repeat without a gap.
+  const bufs = {};
+  function loopify(b){
+    const sr = b.sampleRate, len = b.length, X = Math.min(Math.floor(sr*1.5), Math.floor(len/4));
+    for (let c = 0; c < b.numberOfChannels; c++) {
+      const d = b.getChannelData(c);
+      for (let i = 0; i < X; i++) { const k = i/X; d[i] = d[i]*Math.sqrt(k) + d[len-X+i]*Math.sqrt(1-k); }
+    }
+    return {buf:b, end:(len - X)/sr};
+  }
+  function loadBuf(id){
+    if (!bufs[id]) bufs[id] = fetch('sounds/' + FILES[id])
+      .then(r => { if (!r.ok) throw new Error('http'); return r.arrayBuffer(); })
+      .then(a => new Promise((res, rej) => ctx.decodeAudioData(a, res, rej)))
+      .then(loopify)
+      .catch(e => { delete bufs[id]; throw e; });
+    return bufs[id];
+  }
+  function build(id){
+    const out = G(0); out.connect(ambBus);
+    const nodes = [], timers = [];
+    let dead = false;
+    const T = n => { nodes.push(n); return n; };
+    const every = (fn, a, b) => { const h = {t:0}; const go = () => { h.t = setTimeout(() => { try { fn(); } catch(e){} go(); }, R(a, b)); }; go(); timers.push(h); };
+    const synth = () => { if (dead || !AMB[id]) return; const g = G(SYN[id] || 1); g.connect(out); try { AMB[id](g, T, every); } catch(e){} };
+    if (FILES[id]) {
+      loadBuf(id).then(b => {
+        if (dead) return;
+        const s = T(ctx.createBufferSource()); s.buffer = b.buf; s.loop = true; s.loopStart = 0; s.loopEnd = b.end;
+        const g = G(2.2); s.connect(g); g.connect(out); s.start(ctx.currentTime, R(0, b.end*.8));   // +7 dB to sit level with the synthesized sources
+      }).catch(synth);
+    } else synth();
+    return {gain:out, lv:-1, stop(){ dead = true; timers.forEach(h => clearTimeout(h.t)); nodes.forEach(n => { try { n.stop(); } catch(e){} }); setTimeout(() => { try { out.disconnect(); } catch(e){} }, 50); }};
+  }
+  function kill(id){ const s = srcs[id]; if (!s) return; delete srcs[id]; s.gain.gain.setTargetAtTime(0, ctx.currentTime, .2); setTimeout(() => s.stop(), 1000); }
+
+  // Idempotent: called on every tick with the wanted state; fades instead of cutting.
+  function apply(on, audible, vol, levels){
+    if (!ctx && !on) return;
+    if (!ac()) return;
+    const t = ctx.currentTime, target = on && audible ? vol/100 : 0;
+    if (target !== busTarget) { busTarget = target; ambBus.gain.cancelScheduledValues(t); ambBus.gain.setTargetAtTime(target, t, .5); }
+    if (!on) {
+      if (lastOn) { lastOn = false; clearTimeout(killT); killT = setTimeout(() => { killT = 0; if (!lastOn) Object.keys(srcs).forEach(kill); }, 2600); }
+      return;
+    }
+    lastOn = true; clearTimeout(killT); killT = 0;
+    AMB_IDS.forEach(id => {
+      const lv = (levels[id] || 0)/100;
+      if (lv > 0) { const s = srcs[id] || (srcs[id] = build(id)); if (s.lv !== lv) { s.lv = lv; s.gain.gain.setTargetAtTime(lv*(BASE[id] || 1), t, .3); } }
+      else if (srcs[id]) kill(id);
+    });
+  }
+  function alert(id, vol){
+    if (!id || id === 'none' || !ac()) return;
+    if (!AL[id]) return;
+    const o = G(clamp(vol, 0, 100)/100); o.connect(alertBus);
+    try { AL[id](o, ctx.currentTime + .03); } catch(e){}
+    setTimeout(() => { try { o.disconnect(); } catch(e){} }, 5000);
+  }
+  function preload(id){ if (FILES[id] && ac()) loadBuf(id).catch(() => {}); }
+  return {alert, apply, unlock: ac, preload};
+})();
+
+function hasMix(){ return AMB_IDS.some(id => (cfg.snd.levels[id] || 0) > 0); }
+function syncAmb(){
+  let audible = true;
+  if (run && run.status !== 'done' && run.status !== 'idle') {
+    if (run.paused) audible = false;
+    const ph = run.status === 'countdown' && run.pending ? run.pending.phase : run.status;
+    if (cfg.snd.during === 'study' && ph === 'break') audible = false;
+  }
+  Sound.apply(ambOn && hasMix(), audible, cfg.snd.ambVol, cfg.snd.levels);
+  const label = t(ambOn ? 'ambStop' : 'ambPlay');
+  if ($('ambToggle').textContent !== label) { $('ambToggle').textContent = label; $('fAmb').textContent = label; }
+}
+function toggleAmb(){
+  if (!ambOn && !hasMix()) cfg.snd.levels = Object.assign({}, MIXP[0].levels);
+  ambOn = !ambOn; unlockAudio(); commitSnd();
+}
+
+// Sounds tab
+const PLAY_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z"/></svg>';
+function fillSelect(id, cur){
+  const s = $(id);
+  if (s.options.length !== ALERTS.length) { s.innerHTML = ''; ALERTS.forEach(v => { const o = document.createElement('option'); o.value = v; s.appendChild(o); }); }
+  Array.from(s.options).forEach(o => { o.textContent = t('s_'+o.value); });
+  s.value = cur;
+}
+function rng(id, v){ $(id).value = v; $(id+'Out').textContent = v+'%'; }
+function renderSound(){
+  const S = cfg.snd;
+  $('sound').checked = cfg.sound;
+  rng('alertVol', S.alertVol); rng('warnVol', S.warnVol); rng('ambVol', S.ambVol);
+  EVENTS.forEach(ev => fillSelect('sel_'+ev, S[ev]));
+  fillSelect('sel_warn', S.warnSound);
+  $('cdTick').checked = S.cdTick;
+  $('warnOn').checked = S.warnOn; $('warnBox').hidden = !S.warnOn;
+  renderChips('warnLeadChips', [3,4,5,10], S.warnLead, v => t('secN', {n:v}), v => setSnd('warnLead', v));
+  const curMix = MIXP.find(m => AMB_IDS.every(id => (m.levels[id] || 0) === (S.levels[id] || 0)));
+  renderChips('mixPresets', MIXP.map(m => m.id), curMix ? curMix.id : null, id => t('mx_'+id), id => {
+    cfg.snd.levels = Object.assign({}, MIXP.find(m => m.id === id).levels); ambOn = true; unlockAudio(); commitSnd(); });
+  AMB_IDS.forEach(id => {
+    const lv = S.levels[id] || 0;
+    $('nm_'+id).textContent = t('a_'+id); $('lv_'+id).setAttribute('aria-label', t('a_'+id));
+    $('lv_'+id).value = lv; $('lv_'+id+'Out').textContent = lv+'%';
+    $('nm_'+id).setAttribute('aria-pressed', String(lv > 0));
+  });
+  renderChips('duringChips', ['both','study'], S.during, v => t('dur_'+v), v => setSnd('during', v));
+  $('ambAuto').checked = S.ambAuto;
+  const ul = $('mixList'); ul.innerHTML = '';
+  $('mixNone').hidden = S.mixes.length > 0;
+  S.mixes.forEach((m, i) => {
+    const li = document.createElement('li');
+    const a = document.createElement('button'); a.type = 'button'; a.textContent = m.name;
+    a.onclick = () => { cfg.snd.levels = Object.assign({}, m.levels); ambOn = true; unlockAudio(); commitSnd(); };
+    const x = document.createElement('button'); x.type = 'button'; x.className = 'x'; x.textContent = '×';
+    x.setAttribute('aria-label', t('del', {name:m.name}));
+    x.onclick = () => { cfg.snd.mixes.splice(i, 1); commitSnd(); };
+    li.append(a, x); ul.appendChild(li);
+  });
+  $('mixName').placeholder = t('mixPh');
+}
+function commitSnd(){ save('config', cfg); renderSound(); syncAmb(); if (!$('fpanel').hidden) syncPanel(); }
+function setSnd(k, v){ cfg.snd[k] = v; commitSnd(); }
+
+// Build the mixer rows once, grouped
+AMB_GROUPS.forEach(([gid, ids]) => {
+  const h = document.createElement('p'); h.className = 'mixgroup'; h.dataset.t = gid; h.textContent = t(gid);
+  $('mixRows').appendChild(h);
+  ids.forEach(id => buildMixRow(id));
+});
+function buildMixRow(id){
+  const row = document.createElement('div'); row.className = 'mixrow';
+  row.innerHTML = '<button type="button" class="mixname"></button><input type="range" min="0" max="100" step="5"><output></output>';
+  const [nm, inp, out] = row.children;
+  nm.id = 'nm_'+id; inp.id = 'lv_'+id; out.id = 'lv_'+id+'Out'; out.setAttribute('for', inp.id);
+  nm.textContent = t('a_'+id); inp.setAttribute('aria-label', t('a_'+id));
+  const remember = {v:50};
+  nm.onclick = () => {
+    const cur = cfg.snd.levels[id] || 0;
+    if (cur > 0) { remember.v = cur; cfg.snd.levels[id] = 0; } else { cfg.snd.levels[id] = remember.v; ambOn = true; unlockAudio(); }
+    commitSnd();
+  };
+  inp.addEventListener('input', () => {
+    const v = clamp(int(inp, 0), 0, 100); cfg.snd.levels[id] = v;
+    if (v > 0) { ambOn = true; unlockAudio(); }
+    commitSnd();
+  });
+  $('mixRows').appendChild(row);
+}
+EVENTS.forEach(ev => {
+  $('sel_'+ev).addEventListener('change', e => setSnd(ev, e.target.value));
+  $('try_'+ev).innerHTML = PLAY_ICON; $('try_'+ev).setAttribute('aria-label', t('play'));
+  $('try_'+ev).onclick = () => { unlockAudio(); Sound.alert($('sel_'+ev).value, cfg.snd.alertVol); };
+});
+$('sel_warn').addEventListener('change', e => setSnd('warnSound', e.target.value));
+$('try_warn').innerHTML = PLAY_ICON; $('try_warn').setAttribute('aria-label', t('play'));
+$('try_warn').onclick = () => { unlockAudio(); Sound.alert($('sel_warn').value, cfg.snd.warnVol); };
+$('alertVol').addEventListener('input', e => setSnd('alertVol', clamp(int(e.target, 70), 0, 100)));
+$('warnVol').addEventListener('input', e => setSnd('warnVol', clamp(int(e.target, 60), 0, 100)));
+$('ambVol').addEventListener('input', e => setSnd('ambVol', clamp(int(e.target, 60), 0, 100)));
+$('fAmbVol').addEventListener('input', e => setSnd('ambVol', clamp(int(e.target, 60), 0, 100)));
+$('cdTick').addEventListener('change', e => setSnd('cdTick', e.target.checked));
+$('warnOn').addEventListener('change', e => setSnd('warnOn', e.target.checked));
+$('ambAuto').addEventListener('change', e => setSnd('ambAuto', e.target.checked));
+$('ambToggle').onclick = toggleAmb;
+$('fAmb').onclick = toggleAmb;
+$('mixForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('mixName').value.trim();
+  if (!name || !hasMix()) { $('mixName').focus(); return; }
+  const item = {name, levels:Object.assign({}, cfg.snd.levels)};
+  const i = cfg.snd.mixes.findIndex(m => m.name === name);
+  if (i >= 0) cfg.snd.mixes[i] = item; else cfg.snd.mixes.push(item);
+  $('mixName').value = ''; commitSnd();
+});
+
+// Settings drawer: slides in from the side; pushes the page on wide screens, covers it on phones.
+const wideMQ = (() => { try { return matchMedia('(min-width: 960px)'); } catch(e){ return {matches:false}; } })();
+let dw = clamp(load('dw', 400), 320, 720);
+root.style.setProperty('--dw', dw+'px');
+function setDrawer(open, remember){
+  const d = $('drawer');
+  d.classList.toggle('open', open); d.inert = !open;
+  document.body.classList.toggle('dr-open', open);
+  $('scrim').hidden = !open || wideMQ.matches;
+  $('openSettings').setAttribute('aria-expanded', String(open));
+  if (remember !== false && wideMQ.matches) save('drOpen', open);
+  if (open) { setTab(tab); if (!wideMQ.matches) setTimeout(() => { try { $('drClose').focus({preventScroll:true}); } catch(e){} }, 60); }
+}
+$('openSettings').onclick = () => setDrawer(!$('drawer').classList.contains('open'));
+$('drClose').onclick = () => setDrawer(false);
+$('scrim').onclick = () => setDrawer(false);
+$('fAll').onclick = () => { setPanel(false, true); setDrawer(true, false); };
+try { wideMQ.addEventListener('change', () => { $('scrim').hidden = !$('drawer').classList.contains('open') || wideMQ.matches; }); } catch(e){}
+// Resize by dragging the edge (or with the arrow keys)
+(function(){
+  const g = $('drGrip'); let drag = false;
+  const setW = w => { dw = clamp(Math.round(w), 320, Math.max(320, Math.min(720, window.innerWidth - 360))); root.style.setProperty('--dw', dw+'px'); };
+  g.addEventListener('pointerdown', e => { drag = true; g.classList.add('drag'); document.body.classList.add('dragging'); try { g.setPointerCapture(e.pointerId); } catch(_){} document.body.style.userSelect = 'none'; e.preventDefault(); });
+  g.addEventListener('pointermove', e => { if (drag) setW(root.dir === 'rtl' ? window.innerWidth - e.clientX : e.clientX); });
+  const stop = () => { if (!drag) return; drag = false; g.classList.remove('drag'); document.body.classList.remove('dragging'); document.body.style.userSelect = ''; save('dw', dw); };
+  g.addEventListener('pointerup', stop); g.addEventListener('pointercancel', stop);
+  g.addEventListener('keydown', e => {
+    const grow = (e.key === 'ArrowRight') !== (root.dir === 'rtl');
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { setW(dw + (grow ? 24 : -24)); save('dw', dw); e.preventDefault(); }
+  });
+})();
+// Swipe toward the edge to close it on touch screens
+(function(){
+  let x0 = 0, y0 = 0, on = false;
+  const d = $('drawer');
+  d.addEventListener('touchstart', e => { const tg = e.target; if (tg.closest && tg.closest('input[type="range"],.dr-grip')) { on = false; return; } on = true; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, {passive:true});
+  d.addEventListener('touchmove', e => {
+    if (!on) return;
+    const dx = e.touches[0].clientX - x0, dy = Math.abs(e.touches[0].clientY - y0);
+    if (dy > 40) { on = false; return; }
+    if ((root.dir === 'rtl' ? dx : -dx) > 70) { on = false; setDrawer(false); }
+  }, {passive:true});
+})();
+
+/* ---------- Tasks ---------- */
+let tasks = load('tasks', []);
+if (!Array.isArray(tasks)) tasks = [];
+let curTask = load('curTask', null), openTask = null, statsOpen = false;
+function curTaskObj(){ return tasks.find(x => x.id === curTask && !x.completed) || null; }
+function saveTasks(){ save('tasks', tasks); save('curTask', curTask); renderTasks(); renderTaskLine(); }
+const ICO = {
+  up:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
+  down:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>',
+  check:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  undo:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg>',
+  del:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 11v6M14 11v6M7 7l1 12h8l1-12M9 7V4h6v3"/></svg>'
+};
+function iconBtn(ico, lbl, fn, disabled){
+  const b = document.createElement('button'); b.type = 'button'; b.innerHTML = ICO[ico];
+  b.setAttribute('aria-label', t(lbl)); b.title = t(lbl); b.disabled = !!disabled; b.onclick = fn; return b;
+}
+function taskItem(tk, i, list){
+  const li = document.createElement('li');
+  li.className = 'task' + (tk.id === curTask ? ' current' : '') + (tk.completed ? ' done-t' : '');
+  const pick = document.createElement('button'); pick.type = 'button'; pick.className = 'tk-pick';
+  pick.setAttribute('aria-pressed', String(tk.id === curTask)); pick.setAttribute('aria-label', t('taskPick')); pick.title = t('taskPick');
+  pick.disabled = tk.completed;
+  pick.onclick = () => { curTask = curTask === tk.id ? null : tk.id; saveTasks(); };
+  const main = document.createElement('div'); main.style.minWidth = '0';
+  const nm = document.createElement('button'); nm.type = 'button'; nm.className = 'tk-name'; nm.textContent = tk.name;
+  nm.setAttribute('aria-expanded', String(openTask === tk.id));
+  nm.onclick = () => { openTask = openTask === tk.id ? null : tk.id; renderTasks(); };
+  const prog = document.createElement('div'); prog.className = 'tk-prog';
+  const pct = tk.target ? Math.min(100, tk.done/tk.target*100) : 0;
+  prog.innerHTML = '<span class="tk-bar"><i style="width:'+pct.toFixed(0)+'%"></i></span><span class="tk-n'+(tk.done >= tk.target ? ' ok' : '')+'"></span>';
+  prog.lastChild.textContent = tk.done + '/' + tk.target;
+  prog.lastChild.title = t('sessionsDone', {d:tk.done, n:tk.target}) + (tk.done >= tk.target ? ' · ' + t('taskReached') : '');
+  main.append(nm, prog);
+  const act = document.createElement('div'); act.className = 'tk-act';
+  if (!tk.completed) {
+    act.append(
+      iconBtn('up', 'taskUp', () => move(tk, -1), i === 0),
+      iconBtn('down', 'taskDown', () => move(tk, 1), i === list.length - 1),
+      iconBtn('check', 'taskComplete', () => { tk.completed = true; tk.doneAt = Date.now(); if (curTask === tk.id) curTask = null; saveTasks(); }));
+  } else {
+    act.append(iconBtn('undo', 'taskUndo', () => { tk.completed = false; saveTasks(); }),
+               iconBtn('del', 'taskDelete', () => { tasks = tasks.filter(x => x !== tk); saveTasks(); }));
+  }
+  li.append(pick, main, act);
+  if (openTask === tk.id) {
+    const more = document.createElement('div'); more.className = 'tk-more';
+    const ta = document.createElement('textarea'); ta.value = tk.notes || ''; ta.placeholder = t('taskNotesPh'); ta.setAttribute('aria-label', t('taskNotes'));
+    ta.addEventListener('input', () => { tk.notes = ta.value; save('tasks', tasks); });        // saved without re-rendering, so typing is not interrupted
+    const row = document.createElement('div'); row.className = 'row';
+    const lb = document.createElement('label'); lb.className = 'tgt'; lb.innerHTML = '<span></span><input class="num" type="number" inputmode="numeric" min="1" max="99" dir="ltr">';
+    lb.firstChild.textContent = t('taskTarget'); lb.lastChild.value = tk.target;
+    lb.lastChild.addEventListener('change', e => { tk.target = clamp(int(e.target, tk.target), 1, 99); saveTasks(); });
+    row.append(lb);
+    if (!tk.completed) row.append(iconBtn('del', 'taskDelete', () => { tasks = tasks.filter(x => x !== tk); if (curTask === tk.id) curTask = null; saveTasks(); }));
+    more.append(ta, row); li.append(more);
+  }
+  return li;
+}
+function move(tk, d){
+  const open = tasks.filter(x => !x.completed), i = open.indexOf(tk), j = i + d;
+  if (j < 0 || j >= open.length) return;
+  const a = tasks.indexOf(open[i]), b = tasks.indexOf(open[j]);
+  [tasks[a], tasks[b]] = [tasks[b], tasks[a]]; saveTasks();
+}
+function renderTasks(){
+  const open = tasks.filter(x => !x.completed), done = tasks.filter(x => x.completed);
+  const ul = $('taskList'); ul.innerHTML = ''; open.forEach((tk, i) => ul.appendChild(taskItem(tk, i, open)));
+  const ud = $('taskDoneList'); ud.innerHTML = ''; done.forEach((tk, i) => ud.appendChild(taskItem(tk, i, done)));
+  $('taskNone').hidden = open.length > 0; $('doneSec').hidden = done.length === 0;
+  $('taskName').placeholder = t('taskPh');
+  $('showTaskFocus').checked = cfg.showTaskFocus;
+}
+function renderTaskLine(){
+  const tk = curTaskObj(), b = $('hTask');
+  b.classList.toggle('has', !!tk);
+  b.textContent = tk ? '✎ ' + tk.name + ' · ' + tk.done + '/' + tk.target : t('pickTask');
+}
+$('taskForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('taskName').value.trim();
+  if (!name) { $('taskName').focus(); return; }
+  const tk = {id:'t' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, notes:'', target:clamp(int($('taskTarget'), 2), 1, 99), done:0, completed:false, created:Date.now()};
+  tasks.push(tk);
+  if (!curTaskObj()) curTask = tk.id;            // the first task becomes the current one
+  $('taskName').value = ''; saveTasks(); $('taskName').focus();
+});
+$('hTask').onclick = () => { setDrawer(true); setTab('tasks'); };
+$('showTaskFocus').addEventListener('change', e => { cfg.showTaskFocus = e.target.checked; commit(); });
+
+/* ---------- Study log (kept only on this device) ---------- */
+let stats = load('stats', null);
+if (!stats || !Array.isArray(stats.phases) || !Array.isArray(stats.runs)) stats = {phases:[], runs:[]};
+let todayCache = null;
+function dayStart(t){ const d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime(); }
+function dayKey(t){ const d = new Date(t); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+function todayMs(){
+  const k = dayKey(Date.now());
+  if (!todayCache || todayCache.k !== k) { const from = dayStart(Date.now()); todayCache = {k, ms:stats.phases.reduce((a, x) => a + (x.t >= from ? x.ms : 0), 0)}; }
+  return todayCache.ms;
+}
+function logStudy(ms, full, at){
+  if (ms < 30000) return;                         // ignore accidental starts under 30 s
+  stats.phases.push({t:at, ms:Math.round(ms), full:!!full, task:run && run.task || null});
+  todayCache = null;
+  if (full && run && run.task) { const tk = tasks.find(x => x.id === run.task); if (tk) { tk.done++; saveTasks(); } }
+  save('stats', stats);
+  if (statsOpen) renderStats();
+}
+function logRun(at, complete){
+  const cycles = run.studyDone - (run.loggedCycles || 0);
+  run.loggedCycles = run.studyDone;
+  if (cycles <= 0 && !complete) return;
+  stats.runs.push({t:at, cycles, complete:!!complete});
+  save('stats', stats);
+}
+
+/* ---------- Progress page ---------- */
+let period = load('period', 'week');
+const PERIODS = ['day','week','month','all'];
+function periodFrom(per){
+  const d = new Date(); d.setHours(0, 0, 0, 0);
+  if (per === 'week') d.setDate(d.getDate() - 6);
+  else if (per === 'month') d.setDate(d.getDate() - 29);
+  else if (per === 'all') return 0;
+  return d.getTime();
+}
+function streaks(){
+  const days = new Set(stats.phases.filter(x => x.full).map(x => dayKey(x.t)));
+  let now = 0; const d = new Date(); d.setHours(12, 0, 0, 0);
+  if (!days.has(dayKey(d.getTime()))) d.setDate(d.getDate() - 1);   // today still counts as "open"
+  while (days.has(dayKey(d.getTime()))) { now++; d.setDate(d.getDate() - 1); }
+  const sorted = Array.from(days).map(k => { const [y, m, dd] = k.split('-').map(Number); return new Date(y, m - 1, dd, 12).getTime(); }).sort((a, b) => a - b);
+  let best = 0, run_ = 0, prev = null;
+  sorted.forEach(tm => { run_ = (prev !== null && Math.round((tm - prev)/864e5) === 1) ? run_ + 1 : 1; best = Math.max(best, run_); prev = tm; });
+  return {now, best};
+}
+function minLabel(m){ return m < 60 ? m + ' ' + t('m') : (Math.round(m/6)/10) + ' ' + t('h'); }
+function chartData(){
+  const wd = t('wd').split(','), bars = [];
+  const msOn = (from, to) => stats.phases.reduce((a, x) => a + (x.t >= from && x.t < to ? x.ms : 0), 0);
+  if (period === 'all') {
+    const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - d.getDay() - 7*11);
+    for (let i = 0; i < 12; i++) { const from = d.getTime(); d.setDate(d.getDate() + 7);
+      const f = new Date(from); bars.push({label:f.getDate() + '/' + (f.getMonth() + 1), value:Math.round(msOn(from, d.getTime())/60000), today:i === 11}); }
+    return {bars, goal:cfg.goal*7, weekly:true};
+  }
+  const n = period === 'month' ? 30 : 7, d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (n - 1));
+  for (let i = 0; i < n; i++) { const from = d.getTime(), day = new Date(from); d.setDate(d.getDate() + 1);
+    bars.push({wd:n === 7 ? day.getDay() : undefined, label:n === 7 ? wd[day.getDay()] : String(day.getDate()), long:wd[day.getDay()] + ' ' + day.getDate() + '/' + (day.getMonth() + 1),
+               value:Math.round(msOn(from, d.getTime())/60000), today:i === n - 1}); }
+  return {bars, goal:cfg.goal, weekly:false};
+}
+function drawChart(){
+  const {bars, goal, weekly} = chartData(), svg = $('chart'), NS = 'http://www.w3.org/2000/svg';
+  $('chartTitle').textContent = t(weekly ? 'chartWeeks' : 'chartTitle');
+  // Arabic reads right to left, so time runs right to left and the value axis sits on the right
+  const rtl = root.dir === 'rtl', AX = 42, EDGE = 8;
+  const W = Math.max(260, Math.round($('chartBox').clientWidth || 600)), H = 210, pt = 18, pb = 26;
+  const pl = rtl ? EDGE : AX, pr = rtl ? AX : EDGE;
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('width', W); svg.setAttribute('height', H);
+  svg.innerHTML = ''; svg.classList.remove('hovering');
+  const max = Math.max(goal || 0, ...bars.map(b => b.value), 10);
+  const step = [10, 15, 20, 30, 60, 90, 120, 180, 240, 360, 480, 600, 900, 1200, 1800].find(s_ => max/s_ <= 4) || Math.ceil(max/4/60)*60;
+  const top = Math.ceil(max/step)*step, ih = H - pt - pb, y = v => pt + ih - v/top*ih;
+  const el = (tag, at) => { const e = document.createElementNS(NS, tag); for (const k in at) e.setAttribute(k, at[k]); svg.appendChild(e); return e; };
+  for (let v = 0; v <= top; v += step) {
+    el('line', {class:'grid', x1:pl, x2:W - pr, y1:y(v), y2:y(v)});
+    const tx = el('text', rtl ? {x:W - pr + 6, y:y(v) + 4, 'text-anchor':'start'} : {x:pl - 6, y:y(v) + 4, 'text-anchor':'end'});
+    tx.textContent = v === 0 ? '0' : minLabel(v);
+  }
+  const n = bars.length, band = (W - pl - pr)/n, bw = Math.max(3, Math.min(34, band - 2));
+  const wdS = t('wdS').split(','), short = n === 7 && band < 56;
+  const marks = [];
+  bars.forEach((b, i) => {
+    const slot = rtl ? W - pr - band*(i + 1) : pl + band*i, cx = slot + band/2, x = cx - bw/2, yy = y(b.value), h = pt + ih - yy, r = Math.min(4, bw/2, h);
+    const m = h > 0 ? el('path', {class:'barm', d:'M'+x+','+(pt+ih)+'V'+(yy+r)+'Q'+x+','+yy+' '+(x+r)+','+yy+'H'+(x+bw-r)+'Q'+(x+bw)+','+yy+' '+(x+bw)+','+(yy+r)+'V'+(pt+ih)+'Z'}) : null;
+    if (m && !b.today) m.style.opacity = '.8';
+    marks.push(m);
+    const show = n <= 12 || i % 5 === 0 || i === n - 1;
+    if (show) { const tx = el('text', {x:cx, y:H - 8, 'text-anchor':'middle'}); tx.textContent = short && b.wd !== undefined ? wdS[b.wd] : b.label; if (b.today) tx.style.fill = 'var(--ink)'; }
+    const hit = el('rect', {class:'hit', x:slot, y:pt, width:band, height:ih});
+    const on = () => { svg.classList.add('hovering'); marks.forEach(mm => mm && mm.classList.toggle('on', mm === m));
+      $('chartRead').textContent = (b.long || b.label) + ': ' + (b.value ? fmtHuman(b.value*60) : '—'); };
+    hit.addEventListener('pointerenter', on); hit.addEventListener('pointerdown', on);
+  });
+  svg.onpointerleave = () => { svg.classList.remove('hovering'); $('chartRead').textContent = ''; };
+  if (goal > 0 && goal <= top) { el('line', {class:'goal', x1:pl, x2:W - pr, y1:y(goal), y2:y(goal)});
+  }
+  $('chartGoal').hidden = !(goal > 0); $('chartGoal').lastChild.textContent = t('goalLine') + ' ' + minLabel(goal);
+  // the same numbers as a table for screen readers
+  $('chartTable').innerHTML = '';
+  bars.forEach(b => { const tr = document.createElement('tr'); tr.innerHTML = '<th></th><td></td>'; tr.firstChild.textContent = b.long || b.label; tr.lastChild.textContent = fmtHuman(b.value*60); $('chartTable').appendChild(tr); });
+}
+function renderStats(){
+  renderChips('perChips', PERIODS, period, v => t('per_' + v), v => { period = v; save('period', v); renderStats(); });
+  const from = periodFrom(period), ph = stats.phases.filter(x => x.t >= from);
+  $('statsEmpty').hidden = stats.phases.length > 0;
+  const total = ph.reduce((a, x) => a + x.ms, 0);
+  $('kTime').textContent = fmtHuman(total/1000);
+  $('kSessions').textContent = String(ph.filter(x => x.full).length);
+  $('kLongest').textContent = ph.length ? fmtHuman(Math.max(...ph.map(x => x.ms))/1000) : '—';
+  $('kRounds').textContent = String(stats.runs.filter(r => r.t >= from && r.complete).length);
+  renderChips('goalChips', [30, 60, 90, 120, 180, 240], cfg.goal, v => minLabel(v), v => { cfg.goal = v; commit(); renderStats(); });
+  const tm = todayMs(), g = cfg.goal*60000;
+  $('goalText').textContent = t('goalToday', {a:fmtHuman(tm/1000), b:fmtHuman(cfg.goal*60)}) + (tm >= g ? ' · ' + t('goalDone') : '');
+  $('goalFill').style.width = Math.min(100, tm/g*100).toFixed(1) + '%';
+  const days = period === 'week' ? 7 : period === 'month' ? 30 : 0;
+  $('goalPer').hidden = !days;
+  if (days) $('goalPer').textContent = t('goalPer', {a:fmtHuman(total/1000), b:fmtHuman(cfg.goal*60*days)});
+  drawChart();
+  const st = streaks();
+  $('streakCard').hidden = !cfg.showStreak;
+  $('streakNow').textContent = t('streakNow', {n:st.now}); $('streakBest').textContent = t('streakBest', {n:st.best});
+  const by = {};
+  ph.forEach(x => { const k = x.task || ''; by[k] = (by[k] || 0) + x.ms; });
+  const rows = Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 6), top = rows.length ? rows[0][1] : 1;
+  $('taskCard').hidden = !rows.length || (rows.length === 1 && rows[0][0] === '');
+  const ul = $('byTask'); ul.innerHTML = '';
+  rows.forEach(([k, ms]) => { const tk = tasks.find(x => x.id === k), li = document.createElement('li');
+    li.innerHTML = '<span></span><span></span><span class="bt-bar"><i></i></span>';
+    li.children[0].textContent = tk ? tk.name : t('noTask'); li.children[1].textContent = fmtHuman(ms/1000);
+    li.children[2].firstChild.style.width = (ms/top*100).toFixed(1) + '%'; ul.appendChild(li); });
+  $('showStreak').checked = cfg.showStreak; $('focusStat').checked = cfg.focusStat;
+  $('dataBox').placeholder = t('importPaste');
+}
+function openStats(open){ statsOpen = open; if (open) setDrawer(false, false); show(); if (open) { renderStats(); window.scrollTo(0, 0); } }
+$('openStats').onclick = () => openStats(!statsOpen);
+$('statsBack').onclick = () => openStats(false);
+$('showStreak').addEventListener('change', e => { cfg.showStreak = e.target.checked; commit(); renderStats(); });
+$('focusStat').addEventListener('change', e => { cfg.focusStat = e.target.checked; commit(); });
+window.addEventListener('resize', () => { if (statsOpen) drawChart(); });
+
+// Export / import / clear — downloads are not possible here, so export copies the data as text
+function dataMsg(k){ $('dataMsg').textContent = t(k); }
+$('exportBtn').onclick = () => {
+  const json = JSON.stringify({app:'tarkizo', v:1, at:Date.now(), tasks, curTask, stats});
+  $('dataBox').value = json;
+  const manual = () => { $('dataBox').focus(); $('dataBox').select(); dataMsg('exportManual'); };
+  try { navigator.clipboard.writeText(json).then(() => dataMsg('exported'), manual); } catch(e){ manual(); }
+};
+function importText(txt){
+  try {
+    const d = JSON.parse(txt);
+    if (!d || d.app !== 'tarkizo' || !d.stats || !Array.isArray(d.stats.phases) || !Array.isArray(d.stats.runs) || !Array.isArray(d.tasks)) throw 0;
+    stats = {phases:d.stats.phases.filter(x => x && isFinite(x.t) && isFinite(x.ms)), runs:d.stats.runs.filter(x => x && isFinite(x.t))};
+    tasks = d.tasks.filter(x => x && x.id && x.name); curTask = d.curTask || null; todayCache = null;
+    save('stats', stats); saveTasks(); renderStats(); dataMsg('imported'); $('dataBox').value = '';
+  } catch(e){ dataMsg('importBad'); }
+}
+$('importGo').onclick = () => { if ($('dataBox').value.trim()) importText($('dataBox').value.trim()); else $('importFile').click(); };
+$('importFile').addEventListener('change', e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  const r = new FileReader(); r.onload = () => importText(String(r.result)); r.onerror = () => dataMsg('importBad'); r.readAsText(f); e.target.value = '';
+});
+let clearArmed = 0;
+$('clearBtn').onclick = () => {
+  if (Date.now() - clearArmed > 4000) { clearArmed = Date.now(); $('clearBtn').textContent = t('clearConfirm'); $('clearBtn').classList.add('warn');
+    setTimeout(() => { if (Date.now() - clearArmed >= 4000) { $('clearBtn').textContent = t('clearBtn'); $('clearBtn').classList.remove('warn'); } }, 4100); return; }
+  try { Object.keys(localStorage).filter(k => k.indexOf(KEY) === 0).forEach(k => localStorage.removeItem(k)); } catch(e){}
+  try { location.reload(); } catch(e){}
+};
+label('openStats', 'progress'); label('openSettings', 'settings');
+renderTasks(); renderTaskLine();
+
+// Settings tabs
+const TABS = ['timer','tasks','look','sound'];
+const cap = s => s[0].toUpperCase() + s.slice(1);
+let tab = load('tab', 'timer');
+function setTab(v){
+  tab = TABS.includes(v) ? v : 'timer'; save('tab', tab);
+  TABS.forEach(x => { $('tab'+cap(x)).hidden = x !== tab; $('tb'+cap(x)).setAttribute('aria-selected', String(x === tab)); });
+  if (tab === 'look') renderLook();
+  if (tab === 'sound') renderSound();
+}
+TABS.forEach(x => { $('tb'+cap(x)).onclick = () => setTab(x); });
+
+// Language: Arabic is right-to-left, the other three left-to-right. The clock digits are always isolated left-to-right.
+LANGS.forEach(([code, name]) => { const o = document.createElement('option'); o.value = code; o.textContent = name; o.lang = code === 'ku' ? 'kmr' : code; $('langSel').appendChild(o); });
+$('langSel').value = lang;
+function setLang(l){
+  lang = T[l] ? l : 'ar'; save('lang', lang);
+  $('langSel').value = lang;
+  $('langSel').setAttribute('aria-label', t('langLabel'));
+  applyText(); renderSetup(); renderSaved(); renderSound();
+  if (!$('tabLook').hidden) renderLook();
+  label('optBtn', 'options'); label('exitFocus', 'exitFocus'); label('drClose', 'close'); label('drGrip', 'resize'); updateFs(); renderHero();
+  label('openStats', 'progress'); label('openSettings', 'settings'); renderTasks(); renderTaskLine(); if (statsOpen) renderStats();
+  EVENTS.concat(['warn']).forEach(ev => $('try_'+ev).setAttribute('aria-label', t('play')));
+  dotsKey = ''; $('ambToggle').textContent = ''; syncAmb();
+  if (run) { if (run.status === 'done') renderDone(); else render(); }
+  else document.title = 'TARKIZO';
+}
+$('langSel').addEventListener('change', e => setLang(e.target.value));
+$('langSel').setAttribute('aria-label', t('langLabel'));
+label('drClose', 'close'); label('drGrip', 'resize');
+applyLook();
+setTab(tab);
+setDrawer(wideMQ.matches && !!load('drOpen', false), false);
+
+/* ---------- Installable web app: install button, offline sounds (only on the real website, not inside a preview frame) ---------- */
+(function(){
+  let deferred = null, swReady = false;
+  const standalone = (() => { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch(e){ return false; } })();
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  let topLevel = true; try { topLevel = window.top === window; } catch(e){ topLevel = false; }
+  function update(){
+    $('installBtn').hidden = !deferred;
+    $('iosHint').hidden = !(isIOS && !standalone && topLevel);
+    $('offlineBtn').hidden = !swReady;
+    $('appSec').hidden = $('installBtn').hidden && $('iosHint').hidden && $('offlineBtn').hidden;
+  }
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; update(); });
+  window.addEventListener('appinstalled', () => { deferred = null; update(); });
+  $('installBtn').onclick = () => { if (!deferred) return; deferred.prompt(); Promise.resolve(deferred.userChoice).finally(() => { deferred = null; update(); }); };
+  if (topLevel && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+    navigator.serviceWorker.register('sw.js').then(() => navigator.serviceWorker.ready).then(() => { swReady = true; update(); }).catch(() => {});
+  }
+  // Fetch every recording once; the service worker keeps them, so all sounds work without internet afterwards
+  $('offlineBtn').onclick = async () => {
+    const list = Object.values(FILES); let ok = 0;
+    $('offlineBtn').disabled = true;
+    for (const f of list) {
+      $('offlineMsg').textContent = t('offlineProgress', {d:ok, n:list.length});
+      try { const r = await fetch('sounds/' + f); if (r.ok) { await r.arrayBuffer(); ok++; } } catch(e){}
+    }
+    $('offlineMsg').textContent = t(ok === list.length ? 'offlineDone' : 'offlineFail');
+    $('offlineBtn').disabled = false;
+  };
+  update();
+})();
+
+let lastPersist = 0;
+setInterval(() => {
+  if (!run || $('restore').hidden === false) return;
+  const before = run.status + run.cycle;
+  render();
+  const changed = run && run.status + run.cycle !== before;
+  if (changed && !$('run').hidden) pokeUi();
+  if (run && (changed || Date.now() - lastPersist > 5000)) { lastPersist = Date.now(); persist(); }
+}, 200);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && run && $('restore').hidden) { render(); persist(); if (!run.paused && run.status !== 'done') keepAwake(); }
+});
+window.addEventListener('pagehide', () => { if (run && $('restore').hidden) persist(); });
+
+/* ---------- Start-up: offer to restore an unfinished session ---------- */
+applyText();
+renderSaved();
+if (run && run.status && run.status !== 'done' && run.status !== 'idle') {
+  focusView = false;
+  show();
+  $('home').hidden = false; $('hIdle').hidden = true; $('hLive').hidden = true; $('run').hidden = true; $('cd').hidden = true;
+  renderSetup();
+  const ph = run.status === 'countdown' ? run.pending.phase : run.status;
+  const rem = run.status === 'countdown' ? (run.pending.phase === 'study' ? run.studySec : run.breakSec)*1000 : (run.paused ? run.remain : run.endAt - run.seen);
+  $('restoreInfo').textContent = t('restoreInfo', {phase:t(ph === 'study' ? 'focus' : 'rest'), c:run.status === 'countdown' ? run.pending.cycle : run.cycle, n:run.total, rem:fmtClock(rem)});
+  $('restore').hidden = false;
+  $('restoreGo').onclick = () => {
+    unlockAudio();
+    const shift = Date.now() - (run.seen || Date.now());   // time the page was closed is not counted
+    if (run.status === 'countdown') run.cdEndAt += shift;
+    else if (!run.paused) run.endAt += shift;
+    focusView = cfg.autoFocus;
+    if (cfg.snd.ambAuto && hasMix()) ambOn = true;
+    $('restore').hidden = true; persist(); if (!run.paused) keepAwake(); show();
+  };
+  $('restoreDrop').onclick = () => { run = null; persist(); $('restore').hidden = true; show(); };
+} else {
+  run = null; save('run', null);
+  show();
+}
+})();
+</script>
+
+</body>
+</html>
