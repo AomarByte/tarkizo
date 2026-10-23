@@ -1204,7 +1204,14 @@ function t(k, v){ let s = (T[lang] && T[lang][k]) || T.ar[k] || k; if (v) for (c
 const KEY = 'tarkizo.v1.';
 function load(k, d){ try { const v = localStorage.getItem(KEY+k); return v ? JSON.parse(v) : d; } catch(e){ return d; } }
 function save(k, v){ try { if (v === null) localStorage.removeItem(KEY+k); else localStorage.setItem(KEY+k, JSON.stringify(v)); } catch(e){} }
-lang = (() => { const l = load('lang', null); return T[l] ? l : 'ar'; })();
+// Language: a saved choice wins; otherwise the first supported browser language; otherwise English.
+function browserLang(){
+  const map = { ar:'ar', de:'de', en:'en', ku:'ku', kmr:'ku' };
+  const list = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || ''];
+  for (const l of list) { const c = map[String(l).toLowerCase().split('-')[0]]; if (c && T[c]) return c; }
+  return 'en';
+}
+lang = (() => { const l = load('lang', null); return T[l] ? l : browserLang(); })();
 
 /* ---------- Config ---------- */
 const PRESETS = [
