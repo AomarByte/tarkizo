@@ -2,18 +2,19 @@
 
 **Live site:** https://aomarbyte.github.io/tarkizo/
 
-TARKIZO is a calm study and focus timer that runs in your browser. It is available in Arabic, Kurmanji Kurdish, English and German.
+TARKIZO is a study / focus timer that runs in the browser. I made it because i wanted a calm timer for studying without ads or login.
+It works in Arabic, Kurmanji (Kurdish), English and German. the language is picked from your browser automaticly but you can change it.
 
-## What it does
+## Features
 
-- **Timer:** Pomodoro presets (25/5, 50/10, 90/15, 15/3) or your own times, with cycles, pause, skip and +/- one minute.
-- **Focus screen:** a full-screen clock with controls that hide automatically.
-- **Themes:** 13 designs, six clock styles, light and dark mode, custom colors.
-- **Ambient sounds:** rain, thunder, birds, waves, fire, café, library, keyboard and more. Mix them and set the volume of each one.
-- **Tasks and progress:** tasks with session goals, daily/weekly/monthly stats, a daily goal and streaks.
-- **Installable app:** works on phone and computer, and works offline after the first visit.
+- Pomodoro timer (25/5, 50/10, 90/15, 15/3) or your own times
+- focus screen, only the clock in fullscreen
+- 13 themes, different clock styles, light and dark mode
+- nature sounds (rain, birds, waves, fire, cafe, ...) you can mix them
+- tasks and stats (daily, weekly, monthly) and a daily goal
+- you can install it on your phone or pc and it works offline
 
-No account and no server: all settings, tasks and stats stay in your own browser.
+There is no account and no server, everything is saved only in your browser.
 
 ## Run it locally
 
@@ -22,7 +23,7 @@ python3 -m http.server 8000
 # then open http://localhost:8000
 ```
 
-Every push to `main` is checked (`node scripts/check.mjs`) and deployed to GitHub Pages automatically.
+Every push to `main` runs a small check and then deploys to GitHub Pages.
 
 ## Terms of use / Credit
 
